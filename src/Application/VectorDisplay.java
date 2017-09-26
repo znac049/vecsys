@@ -18,7 +18,7 @@ public class VectorDisplay extends JComponent{
 	private final static int SCREEN_MAX_WIDTH = 512;
 	private final static int SCREEN_MAX_HEIGHT = 512;
 
-	private static class Line{
+	private static class Line {
 	    final int x1; 
 	    final int y1;
 	    final int x2;
@@ -38,8 +38,9 @@ public class VectorDisplay extends JComponent{
 	
 	public VectorDisplay() {
 		setPreferredSize(new Dimension(SCREEN_MAX_WIDTH, SCREEN_MAX_HEIGHT));
+		setMinimumSize(new Dimension(SCREEN_MAX_WIDTH, SCREEN_MAX_HEIGHT));
 		
-		addLine(0, 511, 511, 0);
+		addLine(0, SCREEN_MAX_HEIGHT-1, SCREEN_MAX_WIDTH-1, 0);
 	}
 	
 	public void addLine(int x1, int y1, int x2, int y2) {
