@@ -4,12 +4,16 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Toolkit;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import javax.swing.text.BadLocationException;
 
 import org.fife.ui.rsyntaxtextarea.AbstractTokenMakerFactory;
 import org.fife.ui.rsyntaxtextarea.TokenMakerFactory;
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class ApplicationWindow extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -36,7 +40,23 @@ public class ApplicationWindow extends JFrame {
 		cp.add(viewer, BorderLayout.LINE_START);
 		
 		SourceViewer source = new SourceViewer();
-		cp.add(source, BorderLayout.CENTER);
+		source.addMouseListener(new MouseAdapter() { 
+            public void mouseClicked(MouseEvent me) { 
+            	System.out.println("Clicked!");
+            	System.out.println(me);
+            	
+            	int line;
+            	
+				try {
+					line = source.getLineOfOffset(source.getCaretPosition());
+	            	System.out.println("Line: " + line);
+				} catch (BadLocationException e) {
+					e.printStackTrace();
+				}
+           } 
+		});
+		RTextScrollPane sp = new RTextScrollPane(source);
+		cp.add(sp, BorderLayout.CENTER);
 		
 		VectorDisplay disp = new VectorDisplay();		
 		cp.add(disp, BorderLayout.LINE_END);

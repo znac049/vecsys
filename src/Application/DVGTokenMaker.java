@@ -39,7 +39,6 @@ public class DVGTokenMaker extends AbstractTokenMaker {
 
 			switch (currentTokenType) {
 				case Token.NULL:
-
 		            currentTokenStart = i;   // Starting a new token here.
 
 		            switch (c) {
@@ -48,10 +47,7 @@ public class DVGTokenMaker extends AbstractTokenMaker {
 		                  currentTokenType = Token.WHITESPACE;
 		                  break;
 
-		               case '"':
-		                  currentTokenType = Token.LITERAL_STRING_DOUBLE_QUOTE;
-		                  break;
-
+		               case ';':
 		               case '#':
 		                  currentTokenType = Token.COMMENT_EOL;
 		                  break;
@@ -71,7 +67,6 @@ public class DVGTokenMaker extends AbstractTokenMaker {
 		                  break;
 
 		            } // End of switch (c).
-
 		            break;
 
 				case Token.WHITESPACE:
@@ -80,12 +75,7 @@ public class DVGTokenMaker extends AbstractTokenMaker {
 		               case '\t':
 		                  break;   // Still whitespace.
 
-		               case '"':
-		                  addToken(text, currentTokenStart,i-1, Token.WHITESPACE, newStartOffset+currentTokenStart);
-		                  currentTokenStart = i;
-		                  currentTokenType = Token.LITERAL_STRING_DOUBLE_QUOTE;
-		                  break;
-
+		               case ';':
 		               case '#':
 		                  addToken(text, currentTokenStart,i-1, Token.WHITESPACE, newStartOffset+currentTokenStart);
 		                  currentTokenStart = i;
@@ -121,12 +111,6 @@ public class DVGTokenMaker extends AbstractTokenMaker {
 		                  currentTokenType = Token.WHITESPACE;
 		                  break;
 
-		               case '"':
-		                  addToken(text, currentTokenStart,i-1, Token.IDENTIFIER, newStartOffset+currentTokenStart);
-		                  currentTokenStart = i;
-		                  currentTokenType = Token.LITERAL_STRING_DOUBLE_QUOTE;
-		                  break;
-
 		               default:
 		                  if (RSyntaxUtilities.isLetterOrDigit(c) || c=='/' || c=='_') {
 		                     break;   // Still an identifier of some type.
@@ -143,12 +127,6 @@ public class DVGTokenMaker extends AbstractTokenMaker {
 		                  addToken(text, currentTokenStart,i-1, Token.LITERAL_NUMBER_DECIMAL_INT, newStartOffset+currentTokenStart);
 		                  currentTokenStart = i;
 		                  currentTokenType = Token.WHITESPACE;
-		                  break;
-
-		               case '"':
-		                  addToken(text, currentTokenStart,i-1, Token.LITERAL_NUMBER_DECIMAL_INT, newStartOffset+currentTokenStart);
-		                  currentTokenStart = i;
-		                  currentTokenType = Token.LITERAL_STRING_DOUBLE_QUOTE;
 		                  break;
 
 		               default:
@@ -170,22 +148,10 @@ public class DVGTokenMaker extends AbstractTokenMaker {
 		            // We need to set token type to null so at the bottom we don't add one more token.
 		            currentTokenType = Token.NULL;
 		            break;
-
-				case Token.LITERAL_STRING_DOUBLE_QUOTE:
-		            if (c=='"') {
-		               addToken(text, currentTokenStart,i, Token.LITERAL_STRING_DOUBLE_QUOTE, newStartOffset+currentTokenStart);
-		               currentTokenType = Token.NULL;
-		            }
-		            break;
 			} // End of switch (currentTokenType).
 		} // End of for (int i=offset; i<end; i++).
 		
 		switch (currentTokenType) {
-			// Remember what token type to begin the next line with.
-			case Token.LITERAL_STRING_DOUBLE_QUOTE:
-				addToken(text, currentTokenStart,end-1, currentTokenType, newStartOffset+currentTokenStart);
-				break;
-
 		    // Do nothing if everything was okay.
 			case Token.NULL:
 				addNullToken();
@@ -205,10 +171,13 @@ public class DVGTokenMaker extends AbstractTokenMaker {
 	public TokenMap getWordsToHighlight() {
 		TokenMap tokenMap = new TokenMap();
 		   
-		tokenMap.put("svec",  Token.RESERVED_WORD);
-		tokenMap.put("halt",   Token.RESERVED_WORD);
-		tokenMap.put("jmp",    Token.RESERVED_WORD);
-		tokenMap.put("jsr", Token.RESERVED_WORD);
+		tokenMap.put("vctr",  Token.RESERVED_WORD);
+		tokenMap.put("labs",   Token.RESERVED_WORD);
+		tokenMap.put("halt",    Token.RESERVED_WORD);
+		tokenMap.put("jsrl", Token.RESERVED_WORD);
+		tokenMap.put("rtsl", Token.RESERVED_WORD);
+		tokenMap.put("jmpl", Token.RESERVED_WORD);
+		tokenMap.put("svec", Token.RESERVED_WORD);
 		  
 		tokenMap.put("org", Token.FUNCTION);
 		tokenMap.put("fcb",  Token.FUNCTION);
