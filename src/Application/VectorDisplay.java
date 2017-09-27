@@ -40,11 +40,13 @@ public class VectorDisplay extends JComponent{
 		setPreferredSize(new Dimension(SCREEN_MAX_WIDTH, SCREEN_MAX_HEIGHT));
 		setMinimumSize(new Dimension(SCREEN_MAX_WIDTH, SCREEN_MAX_HEIGHT));
 		
+		setBackground(Color.black);
+		
 		addLine(0, SCREEN_MAX_HEIGHT-1, SCREEN_MAX_WIDTH-1, 0);
 	}
 	
 	public void addLine(int x1, int y1, int x2, int y2) {
-	    addLine(x1, y1, x2, y2, Color.black);
+	    addLine(x1, y1, x2, y2, Color.white);
 	}
 	
 	public void addLine(int x1, int y1, int x2, int y2, Color color) {

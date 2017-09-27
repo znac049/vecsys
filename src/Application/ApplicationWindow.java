@@ -8,6 +8,9 @@ import java.awt.Toolkit;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+import org.fife.ui.rsyntaxtextarea.AbstractTokenMakerFactory;
+import org.fife.ui.rsyntaxtextarea.TokenMakerFactory;
+
 public class ApplicationWindow extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private final static Logger _logger = new Logger("ApplicationWindow");
@@ -36,7 +39,7 @@ public class ApplicationWindow extends JFrame {
 		cp.add(source, BorderLayout.CENTER);
 		
 		VectorDisplay disp = new VectorDisplay();		
-		cp.add(disp, BorderLayout.CENTER);
+		cp.add(disp, BorderLayout.LINE_END);
 		
 		statusBar = MainStatusBar.getMainStatusBar(); 
 		cp.add(statusBar, BorderLayout.PAGE_END);
