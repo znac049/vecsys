@@ -24,14 +24,16 @@ public class VectorEngine {
 	private final static int JMPL_OP  = 0xe000;
 	private final static int SVEC_OP  = 0xf000;
 	
+	private final static int STACK_DEPTH = 4;
+	
 	private ArrayList<Integer> mem = new ArrayList<Integer>();
 	
 	private int scaleFactor;
 	private int currentX;
 	private int currentY;
 	
-	private int[] stack = new int[4];
-	private int stackPtr;
+	private int[] stack = new int[STACK_DEPTH];
+	private int stackPtr = 0;
 	
 	private int maxInstructions = 100;
 	
@@ -44,10 +46,27 @@ public class VectorEngine {
 		currentX = 0;
 		currentY = 0;
 		
-		stackPtr = 0;
-		stack = new int[4];
-		
 		mem.clear();
+	}
+	
+	private boolean push(int addr) {
+		if (stackPtr < STACK_DEPTH) {
+			stack[stackPtr] = addr;
+			stackPtr++;
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	private int pop() {
+		if (stackPtr <= 0) {
+			return -1;
+		}
+		
+		stackPtr--;
+		return stack[stackPtr];
 	}
 	
 	public void set(byte[] bytes) {
@@ -55,16 +74,26 @@ public class VectorEngine {
 		
 		mem.clear();
 		
+		System.out.println(String.format("Loading %d bytes into vector memory", bytes.length));
 		for (i=0; i<bytes.length; i+= 2) {
 			int wrd = (int) ((bytes[i] & 0xFF) | ((bytes[i+1] & 0xFF) << 8));
 			mem.add(wrd);
 		}
 		
+		System.out.println("Refreshing viewer");
 		viewer.set(mem);
 	}
 	
 	private int scale(int base) {
 		// @TODO: Do this!
+		if (scaleFactor <= 8) {
+			base = base << scaleFactor;
+		}
+		else {
+			int shift = 0x08 - (scaleFactor & 0x07);
+			base = base >> shift;
+		}
+		
 		return base;
 	}
 	
@@ -99,19 +128,24 @@ public class VectorEngine {
 				int dest = op & 0x03ff;
 				
 				System.out.println(String.format("%04X: %04X      JSRL $%04X", addr, op, dest));
-				stack[stackPtr] = addr+1;
-				stackPtr++;
-				addr = dest;
+				if (!push(addr+1)) {
+					System.out.println("Stack overflow. Halting.");
+					halted = true;
+				}
+				else {
+					addr = dest;
+				}
 			}
 			break;
 				
 			case RTSL_OP:
 			{
-				int dest = op & 0x03ff;
-				
 				System.out.println(String.format("%04X: %04X      RTSL", addr, op));
-				stackPtr--;
-				addr = stack[stackPtr];
+				addr = pop();
+				if (addr < 0) {
+					System.out.println("Stack underflow. Halting.");
+					halted = true;
+				}
 			}
 			break;
 				
@@ -178,6 +212,31 @@ public class VectorEngine {
 				
 				System.out.println(String.format("%04X: %04X %04X VCTR%d, int=%d, dx=%d, dy=%d", addr, op, op2, num, intensity, x, y));
 				addr += 2;
+			}
+			break;
+			
+			case SVEC_OP:
+			{
+				int y = op & 0x0003;
+				
+				if ((op & 0x0004) != 0) {
+					y = -y;
+				}
+				
+				int x = (op & 0300) >> 8;
+				
+				if ((op & 0x0400) != 0) {
+					x = -x;
+				}
+				
+				int intensity = (op & 0x00f0) >> 4;
+				int scale = ((op >> 11) & 0x0001) | ((op >> 2) & 0x0002);
+				int shift = 7 - scale;
+				
+				x = x << shift;
+				y = y << shift;
+				System.out.println(String.format("%04X: %04X      SVEC int=%d, dx=%d, dy=%d", addr, op, intensity, x, y));
+				addr++;
 			}
 			break;
 				

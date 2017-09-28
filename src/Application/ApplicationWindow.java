@@ -11,6 +11,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -81,13 +85,20 @@ public class ApplicationWindow extends JFrame {
 			}
 			else if (cmd.equalsIgnoreCase(FILE_OPEN_TEXT)) {
 		        JFileChooser fileChooser = new JFileChooser();
+		        
 		        int returnValue = fileChooser.showOpenDialog(null);
 		        if (returnValue == JFileChooser.APPROVE_OPTION) {
-		          File selectedFile = fileChooser.getSelectedFile();
-		          System.out.println(selectedFile.getName());
-		          engine.set(code);
+		        	File selectedFile = fileChooser.getSelectedFile();
+		        	System.out.println(selectedFile.getPath());
+		        	Path path = Paths.get(selectedFile.getAbsolutePath());
+		        	try {
+		        		engine.set(Files.readAllBytes(path));
+		        		engine.display(0);
+		        	} catch (IOException e1) {
+		        		// TODO Auto-generated catch block
+		        		e1.printStackTrace();
+		        	}
 		        }
-		 
 			}
 			else if (cmd.equalsIgnoreCase(ABOUT_TEXT)) {
 				JDialog about = new AboutWindow();

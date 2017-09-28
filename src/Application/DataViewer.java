@@ -39,6 +39,7 @@ public class DataViewer extends JPanel {
 		int i;
 		int count = mem.size();
 		
+		removeAllContent();
 		clear();
 		
 		for (i=0; i<count; i++) {
