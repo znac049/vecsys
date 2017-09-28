@@ -3,6 +3,7 @@ package Application;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.util.ArrayList;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -16,13 +17,13 @@ public class DataViewer extends JPanel {
 		setPreferredSize(new Dimension(100, 100));
 		setMinimumSize(new Dimension(100, 100));
 		
+		clear();
+		
 		setVisible(true);
 	}
 
-	public void clear() {
+	private void clear() {
 		removeAllContent();
-		
-		add(new JLabel("0000:"));
 	}
 	
 	private void removeAllContent() {
@@ -34,9 +35,18 @@ public class DataViewer extends JPanel {
 		}
 	}
 	
-	public void set(byte[] bytes) {
-		removeAllContent();
+	public void set(ArrayList<Integer> mem) {
+		int i;
+		int count = mem.size();
 		
-		add(new JLabel("0000:"));
+		clear();
+		
+		for (i=0; i<count; i++) {
+			if ((i & 1) == 0) {
+				add(new JLabel(String.format("%04X", i)));
+			}
+			
+			add(new JLabel(String.format("%04X", mem.get(i).intValue())));
+		}
 	}
 }
