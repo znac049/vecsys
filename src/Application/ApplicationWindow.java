@@ -4,12 +4,11 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Event;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,19 +23,23 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.text.BadLocationException;
 
-import org.fife.ui.rsyntaxtextarea.AbstractTokenMakerFactory;
-import org.fife.ui.rsyntaxtextarea.TokenMakerFactory;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
-public class ApplicationWindow extends JFrame {
+public class ApplicationWindow extends JFrame implements CaretListener, MouseListener {
 	private static final long serialVersionUID = 1L;
 	private final static Logger _logger = new Logger("ApplicationWindow");
 	private MainStatusBar statusBar;
 	private VectorEngine engine;
 	
 	private static final byte[] code = javax.xml.bind.DatatypeConverter.parseHexBinary("ffa30002ff97009000a200000090ff3300e0");
+
+	private DataViewer viewer;
+	private SourceViewer source;
+	private int currentAddress;
 
 	public class MainMenuBar extends JMenuBar implements ActionListener {
 		private static final long serialVersionUID = 1L;
@@ -47,7 +50,7 @@ public class ApplicationWindow extends JFrame {
 		private static final String ABOUT_TEXT = "About";
 		
 		private Logger _logger = new Logger("MainMenu");
-
+		
 		public MainMenuBar() {
 			JMenu fileMenu = new JMenu(FILE_TEXT);
 			fileMenu.setMnemonic(KeyEvent.VK_F);
@@ -74,7 +77,7 @@ public class ApplicationWindow extends JFrame {
 			
 			add(helpMenu);
 		}
-
+		
 		public void actionPerformed(ActionEvent e) {
 			String cmd = e.getActionCommand();
 			
@@ -121,69 +124,15 @@ public class ApplicationWindow extends JFrame {
 		MainMenuBar menu = new MainMenuBar();
 		setJMenuBar(menu);
 
-		DataViewer viewer = new DataViewer();
-		viewer.addMouseListener(new MouseAdapter() { 
-            public void mouseClicked(MouseEvent me) { 
-            	System.out.println("Clicked!");
-            	System.out.println(me);
-            	
-            	int line;
-            	int start;
-            	int end;
-            	int caret;
-            	int addr;
-            	String text;
-            	
-				try {
-					line = viewer.getLineOfOffset(viewer.getCaretPosition());
-					
-					addr = line * 4;
-					
-					start = viewer.getLineStartOffset(line);
-					end = viewer.getLineEndOffset(line);
-					text = viewer.getText(start, end-start-1);
-					
-					caret = viewer.getCaretOffsetFromLineStart();
-					
-					for (int i=caret-1; i>=0; i--) {
-						char ch = text.charAt(i);
-						
-						//System.out.print(String.format("c='%c' ", ch));
-						if (ch == ',') {
-							addr++;
-						}
-					}
-					
-	            	System.out.println(String.format("Line: %s, start=%d, end=%d, text='%s', caret=%d", line, start, end, text, caret));
-	            	System.out.println(String.format("addr=%04X, ch=%c", addr, text.charAt(caret)));
-	            	
-	            	engine.disassemble(addr);
-	            	engine.display(addr);
-				} catch (BadLocationException e) {
-					e.printStackTrace();
-				}
-            } 
-		});
+		viewer = new DataViewer();
+		viewer.addCaretListener(this);
+		
+		viewer.addMouseListener(this); 
 		RTextScrollPane vsp = new RTextScrollPane(viewer);
 		cp.add(vsp, BorderLayout.LINE_START);
 		
-		SourceViewer source = new SourceViewer();
+		source = new SourceViewer();
 		source.setTabSize(8);
-		source.addMouseListener(new MouseAdapter() { 
-            public void mouseClicked(MouseEvent me) { 
-            	System.out.println("Clicked!");
-            	System.out.println(me);
-            	
-            	int line;
-            	
-				try {
-					line = source.getLineOfOffset(source.getCaretPosition());
-	            	System.out.println("Line: " + line);
-				} catch (BadLocationException e) {
-					e.printStackTrace();
-				}
-            } 
-		});
 		RTextScrollPane sp = new RTextScrollPane(source);
 		cp.add(sp, BorderLayout.CENTER);
 		
@@ -203,12 +152,77 @@ public class ApplicationWindow extends JFrame {
 		setLocationRelativeTo(null);
 	}
 	
+	private void movementOccurred() {
+		int line = viewer.getCaretLineNumber();
+    	int addr = line * 4;
+			
+    	try {
+			int start = viewer.getLineStartOffset(line);
+	    	int end = viewer.getLineEndOffset(line);
+	    	String text = viewer.getText(start, end-start);
+	    	int caret = viewer.getCaretOffsetFromLineStart();
+	    	
+	    	//System.out.println(String.format("Line: %s, start=%d, end=%d, text='%s', caret=%d", line, start, end, text, caret));
+	    	
+			if (caret > 0) {	
+				for (int i=caret-1; i>=0; i--) {
+					char ch = text.charAt(i);
+					
+					//System.out.print(String.format("c='%c' ", ch));
+					if (ch == ',') {
+						addr++;
+					}
+				}
+
+				//System.out.println(String.format("addr=%04X, ch=%c", addr, text.charAt(caret-1)));
+
+		    	if (addr != currentAddress) {
+		    		currentAddress = addr;
+	            	
+	    	    	engine.disassemble(currentAddress);
+	    	    	engine.display(currentAddress);
+		    	}
+			}
+	    	
+		} catch (BadLocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void caretUpdate(CaretEvent e) {
+		//System.out.println("Caret!");
+		movementOccurred();		
+	}	
+
+	@Override
+	public void mouseClicked(MouseEvent arg0) {
+		//System.out.println("Click!");;
+		movementOccurred();
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent arg0) {
+	}
+
+	@Override
+	public void mouseExited(MouseEvent arg0) {
+	}
+
+	@Override
+	public void mousePressed(MouseEvent arg0) {
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent arg0) {		
+	}
+
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				new ApplicationWindow().setVisible(true);
-			}	
+			}		
 		});
-
-	}	
+	}
 }

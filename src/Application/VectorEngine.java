@@ -112,7 +112,7 @@ public class VectorEngine {
 			
 			switch (op & 0xf000) {
 			case HALT_OP:
-				System.out.println(String.format("%04X: %04X HALT", addr, op));
+				//System.out.println(String.format("%04X: %04X HALT", addr, op));
 				System.out.println("Halting.");
 				halted = true;
 				break;
@@ -121,7 +121,7 @@ public class VectorEngine {
 			{
 				int dest = op & 0x03ff;
 				
-				System.out.println(String.format("%04X: %04X      JMPL $%04X", addr, op, dest));
+				//System.out.println(String.format("%04X: %04X      JMPL $%04X", addr, op, dest));
 				addr = dest;
 			}
 			break;
@@ -130,7 +130,7 @@ public class VectorEngine {
 			{
 				int dest = op & 0x03ff;
 				
-				System.out.println(String.format("%04X: %04X      JSRL $%04X", addr, op, dest));
+				//System.out.println(String.format("%04X: %04X      JSRL $%04X", addr, op, dest));
 				if (!push(addr+1)) {
 					System.out.println("Stack overflow. Halting.");
 					halted = true;
@@ -143,7 +143,7 @@ public class VectorEngine {
 				
 			case RTSL_OP:
 			{
-				System.out.println(String.format("%04X: %04X      RTSL", addr, op));
+				//System.out.println(String.format("%04X: %04X      RTSL", addr, op));
 				addr = pop();
 				if (addr < 0) {
 					System.out.println("Stack underflow. Halting.");
@@ -173,7 +173,7 @@ public class VectorEngine {
 				currentX = scale(x);
 				currentY = scale(y);
 				
-				System.out.println(String.format("%04X: %04X %04X LABS, sf=%d, dx=%d, dy=%d", addr, op, op2, scaleFactor, currentX, currentY));
+				//System.out.println(String.format("%04X: %04X %04X LABS, sf=%d, dx=%d, dy=%d", addr, op, op2, scaleFactor, currentX, currentY));
 				addr += 2;
 			}
 			break;
@@ -213,7 +213,7 @@ public class VectorEngine {
 				currentX += x;
 				currentY += y;
 				
-				System.out.println(String.format("%04X: %04X %04X VCTR%d, int=%d, dx=%d, dy=%d", addr, op, op2, num, intensity, x, y));
+				//System.out.println(String.format("%04X: %04X %04X VCTR%d, int=%d, dx=%d, dy=%d", addr, op, op2, num, intensity, x, y));
 				addr += 2;
 			}
 			break;
@@ -238,7 +238,7 @@ public class VectorEngine {
 				
 				x = x << shift;
 				y = y << shift;
-				System.out.println(String.format("%04X: %04X      SVEC int=%d, dx=%d, dy=%d", addr, op, intensity, x, y));
+				//System.out.println(String.format("%04X: %04X      SVEC int=%d, dx=%d, dy=%d", addr, op, intensity, x, y));
 				addr++;
 			}
 			break;
@@ -265,7 +265,7 @@ public class VectorEngine {
 		while ((addr >= 0) && (addr < endAddr)) {
 			int op = mem.get(addr).intValue();
 			
-			source.append(String.format("L_%04X:", addr));
+			source.append(String.format("%04X:", addr));
 			
 			switch (op & 0xf000) {
 			case HALT_OP:
@@ -365,11 +365,11 @@ public class VectorEngine {
 				}
 				
 				int intensity = (op & 0x00f0) >> 4;
-				int scale = ((op >> 11) & 0x0001) | ((op >> 2) & 0x0002);
-				int shift = 7 - scale;
+				//int scale = ((op >> 11) & 0x0001) | ((op >> 2) & 0x0002);
+				//int shift = 7 - scale;
 				
-				x = x << shift;
-				y = y << shift;
+				//x = x << shift;
+				//y = y << shift;
 				source.append(String.format("\tsvec\tint=%d, dx=%d, dy=%d\n", intensity, x, y));
 				addr++;
 			}
