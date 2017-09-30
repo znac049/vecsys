@@ -37,9 +37,12 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 	
 	private static final byte[] code = javax.xml.bind.DatatypeConverter.parseHexBinary("ffa30002ff97009000a200000090ff3300e0");
 
+	private JFileChooser fileChooser;
 	private DataViewer viewer;
 	private SourceViewer source;
 	private int currentAddress;
+	
+	private boolean displayActive;
 
 	public class MainMenuBar extends JMenuBar implements ActionListener {
 		private static final long serialVersionUID = 1L;
@@ -87,15 +90,15 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 				System.exit(0);
 			}
 			else if (cmd.equalsIgnoreCase(FILE_OPEN_TEXT)) {
-		        JFileChooser fileChooser = new JFileChooser();
-		        
 		        int returnValue = fileChooser.showOpenDialog(null);
 		        if (returnValue == JFileChooser.APPROVE_OPTION) {
 		        	File selectedFile = fileChooser.getSelectedFile();
 		        	System.out.println(selectedFile.getPath());
 		        	Path path = Paths.get(selectedFile.getAbsolutePath());
 		        	try {
+		        		displayActive = false;
 		        		engine.set(Files.readAllBytes(path));
+		        		displayActive = true;
 		        		engine.display(0);
 		        	} catch (IOException e1) {
 		        		// TODO Auto-generated catch block
@@ -124,6 +127,17 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 		MainMenuBar menu = new MainMenuBar();
 		setJMenuBar(menu);
 
+		String path = ".";
+		try {
+			path = new File(".").getCanonicalPath();
+			System.out.println("PATH=" + path);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		fileChooser = new JFileChooser(path);
+		
 		viewer = new DataViewer();
 		viewer.addCaretListener(this);
 		
@@ -144,9 +158,12 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 		setBackground(new Color(0x00, 0xd0, 0x00));
 		
 		engine = new VectorEngine(viewer, source, disp);
+		displayActive = false;
 		engine.set(code);
+		displayActive = true;
+		
 		engine.display(0);
-
+		
 		setTitle("DVG Tool");
 		pack();
 		setLocationRelativeTo(null);
@@ -176,7 +193,7 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 
 				//System.out.println(String.format("addr=%04X, ch=%c", addr, text.charAt(caret-1)));
 
-		    	if (addr != currentAddress) {
+		    	if (displayActive && (addr != currentAddress)) {
 		    		currentAddress = addr;
 	            	
 	    	    	engine.disassemble(currentAddress);

@@ -15,8 +15,7 @@ import javax.swing.JPanel;
 public class VectorDisplay extends JComponent{
 	private static final long serialVersionUID = 1L;
 	
-	private final static int SCREEN_MAX_WIDTH = 512;
-	private final static int SCREEN_MAX_HEIGHT = 512;
+	private final static int SCREEN_SIZE = 512;
 	
 	private Color[] greys;
 	private boolean scaleAndCentre = true;
@@ -41,8 +40,8 @@ public class VectorDisplay extends JComponent{
 	private final LinkedList<Line> lines = new LinkedList<Line>();
 	
 	public VectorDisplay() {
-		setPreferredSize(new Dimension(SCREEN_MAX_WIDTH, SCREEN_MAX_HEIGHT));
-		setMinimumSize(new Dimension(SCREEN_MAX_WIDTH, SCREEN_MAX_HEIGHT));
+		setPreferredSize(new Dimension(SCREEN_SIZE, SCREEN_SIZE));
+		setMinimumSize(new Dimension(SCREEN_SIZE, SCREEN_SIZE));
 		
 		greys = new Color[16];
 		int i;
@@ -71,10 +70,10 @@ public class VectorDisplay extends JComponent{
 			maxY = (y1>maxY)?y1:maxY;
 			maxY = (y2>maxY)?y2:maxY;
 			
-			x1 = x1/2;
-			y1 = y1/2;
-			x2 = x2/2;
-			y2 = y2/2;
+			//x1 = x1/2;
+			//y1 = y1/2;
+			//x2 = x2/2;
+			//y2 = y2/2;
 		
 		
 			lines.add(new Line(x1, y1, x2, y2, greys[intensity]));        
@@ -94,10 +93,35 @@ public class VectorDisplay extends JComponent{
 	
 	@Override
 	protected void paintComponent(Graphics g) {
+		int deltaX = maxX-minX;
+		int deltaY = maxY-minY;
+		int range = (deltaX>deltaY)?deltaX:deltaY;
+		float scale = (float)SCREEN_SIZE / (float)range;
+		
+		System.out.println(String.format("range=%d, scale=%f", range, scale));
+		
 	    super.paintComponent(g);
 	    for (Line line : lines) {
 	        g.setColor(line.color);
-	        g.drawLine(line.x1, line.y1, line.x2, line.y2);
+	        
+	        int x1 = line.x1;
+	        int y1 = line.y1;
+	        int x2 = line.x2;
+	        int y2 = line.y2;
+	        
+	        if (scaleAndCentre) {
+	        	float fx1 = (float)(x1-minX) * scale;
+	        	float fy1 = (float)(y1-minY) * scale;
+	        	float fx2 = (float)(x2-minX) * scale;
+	        	float fy2 = (float)(y2-minY) * scale;
+	        	
+	        	x1 = (int)fx1;
+	        	y1 = (int)fy1;
+	        	
+	        	x2 = (int)fx2;
+	        	y2 = (int)fy2;
+	        }
+	        g.drawLine(x1, y1, x2, y2);
 	    }
 	    
 	    System.out.println(String.format("min=%d,%d - max=%d,%d", minX, minY, maxX, maxY));
