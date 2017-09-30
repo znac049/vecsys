@@ -172,6 +172,16 @@ public class DVGTokenMaker extends AbstractTokenMaker {
 		TokenMap tokenMap = new TokenMap();
 		   
 		tokenMap.put("vctr",  Token.RESERVED_WORD);
+		tokenMap.put("vctr0",  Token.RESERVED_WORD);
+		tokenMap.put("vctr1",  Token.RESERVED_WORD);
+		tokenMap.put("vctr2",  Token.RESERVED_WORD);
+		tokenMap.put("vctr3",  Token.RESERVED_WORD);
+		tokenMap.put("vctr4",  Token.RESERVED_WORD);
+		tokenMap.put("vctr5",  Token.RESERVED_WORD);
+		tokenMap.put("vctr6",  Token.RESERVED_WORD);
+		tokenMap.put("vctr7",  Token.RESERVED_WORD);
+		tokenMap.put("vctr8",  Token.RESERVED_WORD);
+		tokenMap.put("vctr9",  Token.RESERVED_WORD);
 		tokenMap.put("labs",   Token.RESERVED_WORD);
 		tokenMap.put("halt",    Token.RESERVED_WORD);
 		tokenMap.put("jsrl", Token.RESERVED_WORD);

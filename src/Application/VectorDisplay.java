@@ -47,24 +47,27 @@ public class VectorDisplay extends JComponent{
 		int level = 0xff;
 		
 		for (i=0; i<16; i++) {
-			greys[i] = new Color(level, level, level);
+			greys[i] = new Color(level, 0, 0);
 			level = level - 0x0f;
 		}
 	}
 	
 	public void addLine(int x1, int y1, int x2, int y2, int intensity) {
-		x1 = x1/2;
-		y1 = y1/2;
-		x2 = x2/2;
-		y2 = y2/2;
+		if (intensity > 0) {
+			x1 = x1/2;
+			y1 = y1/2;
+			x2 = x2/2;
+			y2 = y2/2;
 		
-	    lines.add(new Line(x1, y1, x2, y2, greys[intensity]));        
-	    //System.out.println(String.format("addLine(%d, %d, %d, %d, %d)", x1, y1, x2, y2, intensity));
-	    repaint();
+		
+			lines.add(new Line(x1, y1, x2, y2, greys[intensity]));        
+			//System.out.println(String.format("addLine(%d, %d, %d, %d, %d)", x1, y1, x2, y2, intensity));
+			repaint();
+		}
 	}
 	
 	public void clearScreen() {
-	    //lines.clear();
+	    lines.clear();
 	    repaint();
 	}
 	
@@ -74,7 +77,6 @@ public class VectorDisplay extends JComponent{
 	    for (Line line : lines) {
 	        g.setColor(line.color);
 	        g.drawLine(line.x1, line.y1, line.x2, line.y2);
-	        //System.out.println(String.format("paint %d,%d - %d,%d",  line.x1, line.y1, line.x2, line.y2));
 	    }
 	}
 }

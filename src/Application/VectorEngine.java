@@ -104,6 +104,9 @@ public class VectorEngine {
 		
 		display.clearScreen();
 		
+		stackPtr = 0;
+		currentX = currentY = 511;
+		
 		while ((!halted) && (addr >= 0) && (addr < endAddr)) {
 			int op = mem.get(addr).intValue();
 			
@@ -250,6 +253,130 @@ public class VectorEngine {
 			if (instructions > maxInstructions) {
 				System.out.println(String.format("Max instructions (%d) executed. Halting.", maxInstructions));
 				halted = true;
+			}
+		}
+	}
+
+	public void disassemble(int addr) {
+		int endAddr = mem.size();
+
+		source.setText(String.format("\torg\t$%04X\n\n", addr));
+		
+		while ((addr >= 0) && (addr < endAddr)) {
+			int op = mem.get(addr).intValue();
+			
+			source.append(String.format("L_%04X:", addr));
+			
+			switch (op & 0xf000) {
+			case HALT_OP:
+				source.append("\t\tHALT\n");
+				return;
+				
+			case JMPL_OP:
+			{
+				int dest = op & 0x03ff;
+				source.append(String.format("\tjmpl\t$%04X\n", dest));
+				return;
+			}
+				
+			case JSRL_OP:
+			{
+				int dest = op & 0x03ff;
+				source.append(String.format("\tjsrl\t$%04X\n", dest));
+				addr++;
+			}
+			break;
+				
+			case RTSL_OP:
+				source.append("\trtsl\n");
+				return;
+				
+			case LABS_OP:
+			// Move the beam to an absolute position and set the global scale factor
+			{
+				int y = op & 0x03ff;
+				
+				if ((op & 0x0400) != 0) {
+					y = -y;
+				}
+				
+				int op2 = mem.get(addr+1).intValue();
+				int x = op2 & 0x03ff;
+				
+				int scale = (op2 & 0xf000) >> 12;
+				
+				if ((op2 & 0x0400) != 0) {
+					x = -x;
+				}
+				
+				source.append(String.format("\tlabs\tsf=%d, dx=%d, dy=%d\n", scale, currentX, currentY));
+				addr += 2;
+			}
+			break;
+				
+			case VCTR0_OP:
+			case VCTR1_OP:
+			case VCTR2_OP:
+			case VCTR3_OP:
+			case VCTR4_OP:
+			case VCTR5_OP:
+			case VCTR6_OP:
+			case VCTR7_OP:
+			case VCTR8_OP:
+			case VCTR9_OP:
+			// Draw a vector.
+			{
+				int y = op & 0x03ff;
+				int num = 9 - ((op & 0xf000) >> 12);
+				
+				if ((op & 0x0400) != 0) {
+					y = -y;
+				}
+				
+				int op2 = mem.get(addr+1).intValue();
+				int x = op2 & 0x03ff;
+				
+				int intensity = (op2 & 0xf000) >> 12;
+				
+				if ((op2 & 0x0400) != 0) {
+					x = -x;
+				}
+
+				x = x >> num;
+				y = y >> num;
+				
+				source.append(String.format("\tvctr%d\tint=%d, dx=%d, dy=%d\n", num, intensity, x, y));
+				addr += 2;
+			}
+			break;
+			
+			case SVEC_OP:
+			{
+				int y = op & 0x0003;
+				
+				if ((op & 0x0004) != 0) {
+					y = -y;
+				}
+				
+				int x = (op & 0300) >> 8;
+				
+				if ((op & 0x0400) != 0) {
+					x = -x;
+				}
+				
+				int intensity = (op & 0x00f0) >> 4;
+				int scale = ((op >> 11) & 0x0001) | ((op >> 2) & 0x0002);
+				int shift = 7 - scale;
+				
+				x = x << shift;
+				y = y << shift;
+				source.append(String.format("\tsvec\tint=%d, dx=%d, dy=%d\n", intensity, x, y));
+				addr++;
+			}
+			break;
+				
+			default:
+				break;
 			}
 		}
 	}

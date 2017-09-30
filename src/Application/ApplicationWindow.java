@@ -120,11 +120,55 @@ public class ApplicationWindow extends JFrame {
 		
 		MainMenuBar menu = new MainMenuBar();
 		setJMenuBar(menu);
-		
+
 		DataViewer viewer = new DataViewer();
-		cp.add(viewer, BorderLayout.LINE_START);
+		viewer.addMouseListener(new MouseAdapter() { 
+            public void mouseClicked(MouseEvent me) { 
+            	System.out.println("Clicked!");
+            	System.out.println(me);
+            	
+            	int line;
+            	int start;
+            	int end;
+            	int caret;
+            	int addr;
+            	String text;
+            	
+				try {
+					line = viewer.getLineOfOffset(viewer.getCaretPosition());
+					
+					addr = line * 4;
+					
+					start = viewer.getLineStartOffset(line);
+					end = viewer.getLineEndOffset(line);
+					text = viewer.getText(start, end-start-1);
+					
+					caret = viewer.getCaretOffsetFromLineStart();
+					
+					for (int i=caret-1; i>=0; i--) {
+						char ch = text.charAt(i);
+						
+						//System.out.print(String.format("c='%c' ", ch));
+						if (ch == ',') {
+							addr++;
+						}
+					}
+					
+	            	System.out.println(String.format("Line: %s, start=%d, end=%d, text='%s', caret=%d", line, start, end, text, caret));
+	            	System.out.println(String.format("addr=%04X, ch=%c", addr, text.charAt(caret)));
+	            	
+	            	engine.disassemble(addr);
+	            	engine.display(addr);
+				} catch (BadLocationException e) {
+					e.printStackTrace();
+				}
+            } 
+		});
+		RTextScrollPane vsp = new RTextScrollPane(viewer);
+		cp.add(vsp, BorderLayout.LINE_START);
 		
 		SourceViewer source = new SourceViewer();
+		source.setTabSize(8);
 		source.addMouseListener(new MouseAdapter() { 
             public void mouseClicked(MouseEvent me) { 
             	System.out.println("Clicked!");
@@ -138,7 +182,7 @@ public class ApplicationWindow extends JFrame {
 				} catch (BadLocationException e) {
 					e.printStackTrace();
 				}
-           } 
+            } 
 		});
 		RTextScrollPane sp = new RTextScrollPane(source);
 		cp.add(sp, BorderLayout.CENTER);
