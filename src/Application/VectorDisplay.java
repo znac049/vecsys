@@ -76,7 +76,7 @@ public class VectorDisplay extends JComponent{
 			//y2 = y2/2;
 		
 		
-			lines.add(new Line(x1, y1, x2, y2, greys[intensity]));        
+			lines.add(new Line(x1, 1023-y1, x2, 1023-y2, greys[intensity]));        
 			//System.out.println(String.format("addLine(%d, %d, %d, %d, %d)", x1, y1, x2, y2, intensity));
 			repaint();
 		}
@@ -95,36 +95,30 @@ public class VectorDisplay extends JComponent{
 	protected void paintComponent(Graphics g) {
 		int deltaX = maxX-minX;
 		int deltaY = maxY-minY;
-		int range = (deltaX>deltaY)?deltaX:deltaY;
-		float scale = (float)SCREEN_SIZE / (float)range;
-		
-		System.out.println(String.format("range=%d, scale=%f", range, scale));
-		
+		int shiftRight = 0;
+		int Xoffset = 0;
+		int Yoffset = 0;
+
+		while ((deltaX >= SCREEN_SIZE) || (deltaY >= SCREEN_SIZE)) {
+			shiftRight++;
+			
+			deltaX = deltaX >> 1;
+			deltaY = deltaY >> 1;
+		}
+        
 	    super.paintComponent(g);
 	    for (Line line : lines) {
 	        g.setColor(line.color);
 	        
-	        int x1 = line.x1;
-	        int y1 = line.y1;
-	        int x2 = line.x2;
-	        int y2 = line.y2;
+	        int x1 = line.x1 >> shiftRight;
+	        int y1 = line.y1 >> shiftRight;
+	        int x2 = line.x2 >> shiftRight;
+	        int y2 = line.y2 >> shiftRight;
 	        
-	        if (scaleAndCentre) {
-	        	float fx1 = (float)(x1-minX) * scale;
-	        	float fy1 = (float)(y1-minY) * scale;
-	        	float fx2 = (float)(x2-minX) * scale;
-	        	float fy2 = (float)(y2-minY) * scale;
-	        	
-	        	x1 = (int)fx1;
-	        	y1 = (int)fy1;
-	        	
-	        	x2 = (int)fx2;
-	        	y2 = (int)fy2;
-	        }
-	        g.drawLine(x1, y1, x2, y2);
+	        g.drawLine(Xoffset + x1, Yoffset + y1, Xoffset + x2, Yoffset + y2);
 	    }
 	    
-	    System.out.println(String.format("min=%d,%d - max=%d,%d", minX, minY, maxX, maxY));
+	    //System.out.println(String.format("min=%d,%d - max=%d,%d", minX, minY, maxX, maxY));
 	}
 }
 

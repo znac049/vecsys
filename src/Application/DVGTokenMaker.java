@@ -192,6 +192,11 @@ public class DVGTokenMaker extends AbstractTokenMaker {
 		tokenMap.put("org", Token.FUNCTION);
 		tokenMap.put("fcb",  Token.FUNCTION);
 		tokenMap.put("fdb",  Token.FUNCTION);
+		
+		tokenMap.put("dx",  Token.VARIABLE);
+		tokenMap.put("dy",  Token.VARIABLE);
+		tokenMap.put("int",  Token.VARIABLE);
+		tokenMap.put("sf",  Token.VARIABLE);
 		   
 		return tokenMap;
 	}

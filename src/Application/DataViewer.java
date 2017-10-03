@@ -15,7 +15,7 @@ public class DataViewer extends RSyntaxTextArea {
 		//setSyntaxEditingStyle("text/DVG");
 	}
 
-	public void set(ArrayList<Integer> mem) {
+	public void set(VectorMemory mem) {
 		int i;
 		int count = mem.size();
 
@@ -26,7 +26,7 @@ public class DataViewer extends RSyntaxTextArea {
 				append(String.format("%04X: ", i));
 			}
 			
-			append(String.format("$%04X", mem.get(i).intValue()));
+			append(String.format("$%04X", mem.get(i)));
 			
 			if ((i % 4) == 3) {
 				append("\n");

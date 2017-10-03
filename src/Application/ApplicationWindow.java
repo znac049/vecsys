@@ -7,6 +7,7 @@ import java.awt.Event;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
@@ -29,7 +30,7 @@ import javax.swing.text.BadLocationException;
 
 import org.fife.ui.rtextarea.RTextScrollPane;
 
-public class ApplicationWindow extends JFrame implements CaretListener, MouseListener {
+public class ApplicationWindow extends JFrame implements CaretListener, MouseListener, KeyListener {
 	private static final long serialVersionUID = 1L;
 	private final static Logger _logger = new Logger("ApplicationWindow");
 	private MainStatusBar statusBar;
@@ -97,9 +98,9 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 		        	Path path = Paths.get(selectedFile.getAbsolutePath());
 		        	try {
 		        		displayActive = false;
-		        		engine.set(Files.readAllBytes(path));
+		        		engine.set(Files.readAllBytes(path), 0x00400);
 		        		displayActive = true;
-		        		engine.display(0);
+		        		engine.go(0);
 		        	} catch (IOException e1) {
 		        		// TODO Auto-generated catch block
 		        		e1.printStackTrace();
@@ -140,7 +141,7 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 		
 		viewer = new DataViewer();
 		viewer.addCaretListener(this);
-		
+		viewer.addKeyListener(this);
 		viewer.addMouseListener(this); 
 		RTextScrollPane vsp = new RTextScrollPane(viewer);
 		cp.add(vsp, BorderLayout.LINE_START);
@@ -157,12 +158,13 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 		cp.add(statusBar, BorderLayout.PAGE_END);
 		setBackground(new Color(0x00, 0xd0, 0x00));
 		
+		currentAddress = -1;
 		engine = new VectorEngine(viewer, source, disp);
 		displayActive = false;
-		engine.set(code);
+		engine.set(code, 0);
 		displayActive = true;
 		
-		engine.display(0);
+		engine.go(0);
 		
 		setTitle("DVG Tool");
 		pack();
@@ -179,7 +181,7 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 	    	String text = viewer.getText(start, end-start);
 	    	int caret = viewer.getCaretOffsetFromLineStart();
 	    	
-	    	//System.out.println(String.format("Line: %s, start=%d, end=%d, text='%s', caret=%d", line, start, end, text, caret));
+	    	System.out.println(String.format("Line: %s, start=%d, end=%d, text='%s', caret=%d", line, start, end, text, caret));
 	    	
 			if (caret > 0) {	
 				for (int i=caret-1; i>=0; i--) {
@@ -191,13 +193,13 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 					}
 				}
 
-				//System.out.println(String.format("addr=%04X, ch=%c", addr, text.charAt(caret-1)));
+				System.out.println(String.format("addr=%04X, ch=%c", addr, text.charAt(caret-1)));
 
 		    	if (displayActive && (addr != currentAddress)) {
 		    		currentAddress = addr;
 	            	
 	    	    	engine.disassemble(currentAddress);
-	    	    	engine.display(currentAddress);
+	    	    	engine.go(currentAddress);
 		    	}
 			}
 	    	
@@ -215,7 +217,7 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 
 	@Override
 	public void mouseClicked(MouseEvent arg0) {
-		//System.out.println("Click!");;
+		System.out.println("Click!");;
 		movementOccurred();
 	}
 
@@ -233,6 +235,20 @@ public class ApplicationWindow extends JFrame implements CaretListener, MouseLis
 
 	@Override
 	public void mouseReleased(MouseEvent arg0) {		
+	}
+
+	@Override
+	public void keyPressed(KeyEvent arg0) {
+		System.out.println("Press!");
+	}
+
+	@Override
+	public void keyReleased(KeyEvent arg0) {
+	}
+
+	@Override
+	public void keyTyped(KeyEvent arg0) {
+		System.out.println("Key!");
 	}
 
 	public static void main(String[] args) {
