@@ -11,6 +11,14 @@ public class MappedRange {
 		device = dev;
 	}
 	
+	public int getStartAddress() {
+		return startAddress;
+	}
+	
+	public int getEndAddress() {
+		return endAddress;
+	}
+	
 	public boolean inRange(int addr) {
 		return ((addr >= startAddress) && (addr <= endAddress));
 	}

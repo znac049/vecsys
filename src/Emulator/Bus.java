@@ -45,16 +45,54 @@ public class Bus implements ByteAccess, WordAccess {
 		}
 	}
 	
-	public void attach(MappedRange range) {
+	private boolean overlaps(MappedRange r) {
+		for (MappedRange range : ranges) {
+			if (r.overlaps(range)) {
+				return true;
+			}
+		}
 		
+		return false;
+	}
+	
+	public void attach(int start, int end, Device dev) throws RangeException {
+		attach(new MappedRange(start, end, dev));
+	}
+	
+	public void attach(MappedRange range) throws RangeException {
+		if ((!overlapsAllowed) && (overlaps(range))) {
+			throw new RangeException("Attempt to attach an overlapping range");
+		}
+		
+		// Keep the arraylist sorted in order o addresses, lo to high
+		int i;
+		int prevInd = -1;
+		int end = range.getEndAddress();
+		
+		for (i=0; i<ranges.size(); i++)  {
+			if (end < ranges.get(i).getStartAddress()) {
+				prevInd = i;
+			}
+		}
+		
+		if (prevInd != -1) {
+			_log.logInfo(String.format("Inserting at %d", prevInd));
+			ranges.add(prevInd, range);
+		}
+		else {
+			_log.logInfo("Inserting at end");
+			ranges.add(range);
+		}
 	}
 	
 	public void dump() {
 		_log.logInfo("Memory Bus dump");
 		
 		for (MappedRange range : ranges) {
-			
+			_log.logInfo(String.format("  %04x-%04x", range.getStartAddress(), range.getEndAddress()));
 		}
+		
+		_log.logInfo("End of Memory bus dump");
 	}
 
 	@Override
@@ -64,7 +102,7 @@ public class Bus implements ByteAccess, WordAccess {
 	}
 
 	@Override
-	public void setWord(int addr) {
+	public void setWord(int addr, int val) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -76,7 +114,7 @@ public class Bus implements ByteAccess, WordAccess {
 	}
 
 	@Override
-	public void setByte(int addr, byte val) {
+	public void setByte(int addr, int val) {
 		// TODO Auto-generated method stub
 		
 	}
