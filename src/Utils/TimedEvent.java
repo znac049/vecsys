@@ -1,4 +1,4 @@
-package Application;
+package Utils;
 
 public class TimedEvent {
 	private static Logger _logger = new Logger("TimedEvent");

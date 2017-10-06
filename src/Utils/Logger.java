@@ -1,4 +1,4 @@
-package Application;
+package Utils;
 
 import java.awt.*;
 import java.io.FileNotFoundException;

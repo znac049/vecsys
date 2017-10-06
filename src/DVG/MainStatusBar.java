@@ -1,4 +1,4 @@
-package Application;
+package DVG;
 
 import java.awt.Color;
 import java.awt.Dimension;
