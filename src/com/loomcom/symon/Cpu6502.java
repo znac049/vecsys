@@ -76,13 +76,9 @@ public class Cpu6502 implements InstructionTable {
      * Construct a new CPU.
      */
     public Cpu6502() {
-        this(CpuBehavior.NMOS_6502);
+        this.behavior = CpuBehavior.NMOS_6502;
     }
-
-    public Cpu6502(CpuBehavior behavior) {
-        this.behavior = behavior;
-    }
-
+    
     /**
      * Set the bus reference for this CPU.
      */
@@ -111,12 +107,15 @@ public class Cpu6502 implements InstructionTable {
     
     /**
      * Reset the CPU to known initial values.
+     * @throws MemoryAccessException 
      */
     public void reset() throws MemoryAccessException {
         state.sp = 0xff;
 
         // Set the PC to the address stored in the reset vector
         state.pc = bus.getWord(RST_VECTOR_L);
+        
+        _log.logInfo(String.format("Reset vector: %04x", state.pc));
 
         // Clear instruction register.
         state.ir = 0;
@@ -154,6 +153,7 @@ public class Cpu6502 implements InstructionTable {
 
     /**
      * Performs an individual instruction cycle.
+     * @throws MemoryAccessException 
      */
     public void step() throws MemoryAccessException {
         opBeginTime = System.nanoTime();

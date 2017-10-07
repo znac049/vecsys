@@ -1,15 +1,15 @@
 package uk.org.wookey.vecsys.emulator;
 
-import com.loomcom.symon.Cpu6502;
+import java.io.IOException;
 
+import uk.org.wookey.vecsys.cpus.CPU;
+import uk.org.wookey.vecsys.cpus.cpu6502.Cpu6502;
 import uk.org.wookey.vecsys.utils.Logger;
 
 public class AsteroidsDeluxe extends Emulator {
 	private static Logger _log = new Logger("AD-Game");
 
-	private Bus bus;
-	
-	public AsteroidsDeluxe() throws RangeException {
+	public AsteroidsDeluxe() throws RangeException, IOException {
 		bus = new Bus(16);
 		bus.setAddressMask(0x7fff);
 		bus.setLittleEndian();
@@ -17,6 +17,7 @@ public class AsteroidsDeluxe extends Emulator {
 		_log.logInfo("Populating bus");
 		
 		MemoryDevice gameRom = new MemoryDevice(8192);
+		gameRom.loadFile("Code/ad-v3.bin", 0);
 		gameRom.setWriteable(false);
 		gameRom.setName("Game ROM");
 		bus.attach(0x6000, 0x7fff, gameRom);
@@ -31,8 +32,18 @@ public class AsteroidsDeluxe extends Emulator {
 		bus.attach(0x3800, dvg.getResetVGDevice());
 		bus.attach(0x4000, 0x57ff, dvg.getVectorMemory());
 		
-		bus.dump();
+		cpu = new Cpu6502();
+		cpu.setBus(bus);
+		cpu.reset();
+		cpu.step();
 		
-		Cpu6502 cpu = new Cpu6502();
+		if (cpu.isBigEndian()) {
+			bus.setBigEndian();
+		}
+		else {
+			bus.setLittleEndian();
+		}
+
+		bus.dump();
 	}
 }

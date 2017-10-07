@@ -1,10 +1,12 @@
 package uk.org.wookey.vecsys.emulator;
 
+import java.io.IOException;
+
 public class DVGMemory extends Device {
 	private MemoryDevice vram;
 	private MemoryDevice vrom;
 	
-	public DVGMemory() {
+	public DVGMemory() throws IOException {
 		super("DVGMeory");
 		
 		vram = new MemoryDevice(2048);
@@ -12,6 +14,7 @@ public class DVGMemory extends Device {
 		
 		vrom = new MemoryDevice(4096);
 		vrom.setName("Vector ROM");
+		vrom.loadFile("Code/ad-v3-vrom.bin", 0);
 		vrom.setWriteable(false);
 	}
 	

@@ -1,11 +1,17 @@
 package uk.org.wookey.vecsys.emulator;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
+import uk.org.wookey.vecsys.utils.Logger;
+
 public class MemoryDevice extends Device {
+	private static Logger _log = new Logger("MemoryDevice");
+	
 	private boolean readOnly;
 	private int size;
 	private ArrayList<MemoryCell> contents;
@@ -29,6 +35,12 @@ public class MemoryDevice extends Device {
 		return !readOnly;
 	}
 	
+	public int loadFile(String name, int addr) throws IOException {
+    	Path path = Paths.get(name);
+
+    	return loadFile(path, addr);
+	}
+	
 	public int loadFile(Path path, int addr) throws IOException {
 		byte[] bytes = Files.readAllBytes(path);
 		int i=0;
@@ -41,6 +53,8 @@ public class MemoryDevice extends Device {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		_log.logInfo(String.format("Read %d bytes from %s", i, path.toString()));
 		
 		return i;
 	}
