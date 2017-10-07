@@ -1,6 +1,6 @@
-package Emulator;
+package uk.org.wookey.vecsys.emulator;
 
-public class Device {
+public abstract class Device {
 	protected String name;
 	
 	public Device(String devName) {
@@ -15,10 +15,6 @@ public class Device {
 		return name;
 	}
 	
-	public int getByte(int addr) {
-		return 0;
-	}
-	
-	public void setByte(int addr, int val) throws IllegalAccessException {
-	}
+	public abstract int getByte(int addr);
+	public abstract void setByte(int addr, int val) throws IllegalAccessException;
 }

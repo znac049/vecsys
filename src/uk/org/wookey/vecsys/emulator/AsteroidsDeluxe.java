@@ -1,6 +1,8 @@
-package Emulator;
+package uk.org.wookey.vecsys.emulator;
 
-import Utils.Logger;
+import com.loomcom.symon.Cpu6502;
+
+import uk.org.wookey.vecsys.utils.Logger;
 
 public class AsteroidsDeluxe extends Emulator {
 	private static Logger _log = new Logger("AD-Game");
@@ -10,6 +12,7 @@ public class AsteroidsDeluxe extends Emulator {
 	public AsteroidsDeluxe() throws RangeException {
 		bus = new Bus(16);
 		bus.setAddressMask(0x7fff);
+		bus.setLittleEndian();
 		
 		_log.logInfo("Populating bus");
 		
@@ -29,5 +32,7 @@ public class AsteroidsDeluxe extends Emulator {
 		bus.attach(0x4000, 0x57ff, dvg.getVectorMemory());
 		
 		bus.dump();
+		
+		Cpu6502 cpu = new Cpu6502();
 	}
 }

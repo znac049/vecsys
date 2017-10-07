@@ -1,8 +1,8 @@
-package Emulator;
+package uk.org.wookey.vecsys.emulator;
 
 import java.util.ArrayList;
 
-import Utils.Logger;
+import uk.org.wookey.vecsys.utils.Logger;
 
 public class Bus {
 	private static Logger _log = new Logger("Bus");
@@ -45,6 +45,14 @@ public class Bus {
 	
 	private boolean validAddress(int addr) {
 		return ((addr >= 0) || (addr <= maxAddress));
+	}
+	
+	public void setBigEndian() {
+		bigEndian = true;
+	}
+	
+	public void setLittleEndian() {
+		bigEndian = false;
 	}
 	
 	public void setOverlapping(boolean canOverlap) {
@@ -136,7 +144,16 @@ public class Bus {
 		return emptyValue;
 	}
 
-	public void setByte(int addr, int val) throws IllegalAccessException {
+	public void setByte(int addr, int val) {
+		try {
+			setByteX(addr, val);
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void setByteX(int addr, int val) throws IllegalAccessException {
 		addr = mask(addr);
 		
 		MappedRange range = getRange(addr);
@@ -180,6 +197,10 @@ public class Bus {
 			setByte(addr, val);
 			setByte(addr+1, (val>>8));
 		}
+	}
+	
+	public int getEndAddress() {
+		return maxAddress;
 	}
 	
 	public void dump() {

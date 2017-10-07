@@ -1,4 +1,4 @@
-package Emulator;
+package uk.org.wookey.vecsys.emulator;
 
 import java.io.IOException;
 import java.nio.file.Files;

@@ -1,10 +1,10 @@
-package Application;
+package uk.org.wookey.vecsys.application;
 
 import javax.swing.SwingUtilities;
 
 import DVG.ApplicationWindow;
-import Emulator.AsteroidsDeluxe;
-import Emulator.RangeException;
+import uk.org.wookey.vecsys.emulator.AsteroidsDeluxe;
+import uk.org.wookey.vecsys.emulator.RangeException;
 
 public class Application {
 	public Application() {

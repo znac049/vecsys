@@ -30,7 +30,7 @@ import javax.swing.text.BadLocationException;
 
 import org.fife.ui.rtextarea.RTextScrollPane;
 
-import Utils.Logger;
+import uk.org.wookey.vecsys.utils.Logger;
 
 public class ApplicationWindow extends JFrame implements CaretListener, MouseListener, KeyListener {
 	private static final long serialVersionUID = 1L;

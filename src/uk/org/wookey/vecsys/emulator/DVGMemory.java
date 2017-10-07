@@ -1,4 +1,4 @@
-package Emulator;
+package uk.org.wookey.vecsys.emulator;
 
 public class DVGMemory extends Device {
 	private MemoryDevice vram;
