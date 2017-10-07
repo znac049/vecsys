@@ -26,4 +26,8 @@ public class MappedRange {
 	public boolean overlaps(MappedRange target) {
 		return inRange(target.startAddress) || inRange(target.endAddress);
 	}
+
+	public Device getDevice() {
+		return device;
+	}
 }

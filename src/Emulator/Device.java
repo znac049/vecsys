@@ -14,4 +14,11 @@ public class Device {
 	public String getName() {
 		return name;
 	}
+	
+	public int getByte(int addr) {
+		return 0;
+	}
+	
+	public void setByte(int addr, int val) throws IllegalAccessException {
+	}
 }

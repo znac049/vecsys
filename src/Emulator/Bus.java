@@ -4,23 +4,29 @@ import java.util.ArrayList;
 
 import Utils.Logger;
 
-public class Bus implements ByteAccess, WordAccess {
+public class Bus {
 	private static Logger _log = new Logger("Bus");
 	
 	private int busWidth;
 	private int addressMask;
 	private boolean overlapsAllowed;
+	private int maxAddress;
+	private int emptyValue;
+	private boolean bigEndian;
 	
 	private ArrayList<MappedRange> ranges;
 	
 	public Bus(int width) throws RangeException {
-		if ((width <= 0) || (width > 29)) {
+		if ((width <= 0) || (width > 24)) {
 			throw new RangeException(String.format("Bus width of %d not supported", width));
 		}
 		
-		busWidth = width;		
-		addressMask = (1<<width)-1;
+		busWidth = width;
+		maxAddress = (1<<busWidth)-1;
+		addressMask = (1<<busWidth)-1;
 		overlapsAllowed = false;
+		emptyValue = 0xff;
+		bigEndian = true;
 		
 		ranges = new ArrayList<MappedRange>();
 	}
@@ -31,6 +37,14 @@ public class Bus implements ByteAccess, WordAccess {
 	
 	public int getAddressMask() {
 		return addressMask;
+	}
+	
+	private int mask(int addr) {
+		return addr & addressMask;
+	}
+	
+	private boolean validAddress(int addr) {
+		return ((addr >= 0) || (addr <= maxAddress));
 	}
 	
 	public void setOverlapping(boolean canOverlap) {
@@ -55,6 +69,10 @@ public class Bus implements ByteAccess, WordAccess {
 		return false;
 	}
 	
+	public void attach(int singleAddr, Device dev) throws RangeException {
+		attach(new MappedRange(singleAddr, singleAddr, dev));
+	}
+	
 	public void attach(int start, int end, Device dev) throws RangeException {
 		attach(new MappedRange(start, end, dev));
 	}
@@ -66,56 +84,121 @@ public class Bus implements ByteAccess, WordAccess {
 		
 		// Keep the arraylist sorted in order o addresses, lo to high
 		int i;
-		int prevInd = -1;
+		int ind = -1;
 		int end = range.getEndAddress();
 		
 		for (i=0; i<ranges.size(); i++)  {
-			if (end < ranges.get(i).getStartAddress()) {
-				prevInd = i;
+			if ((ind == -1) && (end < ranges.get(i).getStartAddress())) {
+				ind = i;
 			}
 		}
 		
-		if (prevInd != -1) {
-			_log.logInfo(String.format("Inserting at %d", prevInd));
-			ranges.add(prevInd, range);
+		if (ind != -1) {
+			_log.logInfo(String.format("Inserting %04x-%04x at %d", range.getStartAddress(), range.getEndAddress(), ind));
+			ranges.add(ind, range);
 		}
 		else {
-			_log.logInfo("Inserting at end");
+			_log.logInfo(String.format("Inserting %04x-%04x at end", range.getStartAddress(), range.getEndAddress()));
 			ranges.add(range);
+		}
+	}
+	
+	/*
+	 * Find the device which handles a given address
+	 */
+	private MappedRange getRange(int addr) {
+		if (!validAddress(addr)) {
+			throw new ArrayIndexOutOfBoundsException(String.format("Bad address %04x", addr));
+		}
+		
+		for (MappedRange range : ranges) {
+			if (range.inRange(addr)) {
+				return range;
+			}
+		}
+		
+		return null;
+	}
+
+	public int getByte(int addr) {
+		addr = mask(addr);
+		
+		MappedRange range = getRange(addr);
+		if (range != null) {
+			addr = addr - range.getStartAddress();
+		
+			return range.getDevice().getByte(addr); 
+		}
+		else {
+			_log.logWarn(String.format("Reading byte from address %04x with no handler", addr));
+		}
+		
+		return emptyValue;
+	}
+
+	public void setByte(int addr, int val) throws IllegalAccessException {
+		addr = mask(addr);
+		
+		MappedRange range = getRange(addr);
+		if (range != null) {
+			addr = addr - range.getStartAddress();
+
+			range.getDevice().setByte(addr, val);
+		}
+		else {
+			_log.logWarn(String.format("Writing byte %02x to address %04x with no handler", val, addr));
+		}
+	}
+	
+	public int getWord(int addr) {
+		int res = 0;
+		
+		if ((addr < 0) || (addr > maxAddress)) {
+			throw new ArrayIndexOutOfBoundsException("MemoryDevice address out of bounds");
+		}
+		
+		if (bigEndian) {
+			res = (getByte(addr)<<8) | getByte(addr+1);
+		}
+		else {
+			res = getByte(addr) | (getByte(addr+1)<<8);
+		}
+		
+		return res;
+	}
+
+	public void setWord(int addr, int val) throws IllegalAccessException {
+		if ((addr < 0) || (addr > maxAddress)) {
+			throw new ArrayIndexOutOfBoundsException("MemoryDevice address out of bounds");
+		}
+		
+		if (bigEndian) {
+			setByte(addr, (val>>8));
+			setByte(addr+1, val);
+		}
+		else {
+			setByte(addr, val);
+			setByte(addr+1, (val>>8));
 		}
 	}
 	
 	public void dump() {
 		_log.logInfo("Memory Bus dump");
+		_log.logInfo(String.format("    width=%d bits, mask=%06x. Max Address=%06x", busWidth, addressMask, maxAddress));
+		_log.logInfo(String.format("    bigEndian=%b, can overlap=%b. Empty value=%02x", bigEndian, overlapsAllowed, emptyValue));
 		
 		for (MappedRange range : ranges) {
-			_log.logInfo(String.format("  %04x-%04x", range.getStartAddress(), range.getEndAddress()));
+			int start = range.getStartAddress();
+			int end = range.getEndAddress();
+			
+			if (start == end) {
+				_log.logInfo(String.format("  %04x     : %-12s", start, range.getDevice().getName()));
+			}
+			else {
+				_log.logInfo(String.format("  %04x-%04x: %-12s", start, end, range.getDevice().getName()));
+			}
 		}
 		
 		_log.logInfo("End of Memory bus dump");
-	}
-
-	@Override
-	public int getWord(int addr) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public void setWord(int addr, int val) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public int getByte(int addr) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public void setByte(int addr, int val) {
-		// TODO Auto-generated method stub
-		
 	}
 }

@@ -18,18 +18,15 @@ public class AsteroidsDeluxe extends Emulator {
 		gameRom.setName("Game ROM");
 		bus.attach(0x6000, 0x7fff, gameRom);
 		
-		MemoryDevice vectorRom = new MemoryDevice(4096);
-		vectorRom.setWriteable(false);
-		vectorRom.setName("Vector ROM");
-		bus.attach(0x4800, 0x57ff, vectorRom);
-		
 		MemoryDevice gameRam = new MemoryDevice(1024);
 		gameRam.setName("Game RAM");
 		bus.attach(0, 1024, gameRam);
 		
-		MemoryDevice vectorRam = new MemoryDevice(2048);
-		gameRam.setName("Game ROM");
-		bus.attach(0x4000, 0x47ff, vectorRam);
+		DVG dvg = new DVG();
+		bus.attach(0x2001, dvg.getHaltedFlagDevice());
+		bus.attach(0x3000, dvg.getStartVGDevice());
+		bus.attach(0x3800, dvg.getResetVGDevice());
+		bus.attach(0x4000, 0x57ff, dvg.getVectorMemory());
 		
 		bus.dump();
 	}
