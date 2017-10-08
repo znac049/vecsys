@@ -24,10 +24,11 @@ public class CpuState extends CPUState {
     public boolean breakFlag;
     public boolean overflowFlag;
     
-	private STATEPanel statePanel;
+	private StatePanel statePanel;
 	
 	public CpuState() {
 		statePanel = new StatePanel();
+		statePanel.rebuild(this);
 	}
 	
     public int getStatusFlag() {

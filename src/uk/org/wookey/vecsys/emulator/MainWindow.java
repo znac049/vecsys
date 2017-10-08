@@ -81,7 +81,7 @@ public class MainWindow extends JFrame {
 		_logger.logMsg("And we're off!");
 		
 		Container cp = getContentPane();
-		GBConstraints gbc = new GBConstraints(3, 3);
+		GBConstraints gbc = new GBConstraints();
 
 		cp.setLayout(new GridBagLayout());
 		

@@ -8,16 +8,16 @@ import uk.org.wookey.vecsys.utils.Logger;
 public class GBConstraints extends GridBagConstraints {
 	private static Logger _log = new Logger("GBConstraints");
 
-	public GBConstraints(int width, int height) {
+	public GBConstraints() {
 		super();
 		
 		gridx = 0;
 		gridy = 0;
 		
-		gridwidth = width;
-		gridheight = height;
+		gridwidth = 1;
+		gridheight = 1;
 		
-		weightx = 1.0;
+		weightx = 0.5;
 		weighty = 0.0;
 		
 		insets = new Insets(2, 2, 2, 2);
@@ -27,10 +27,6 @@ public class GBConstraints extends GridBagConstraints {
 		anchor = GridBagConstraints.PAGE_START;
 	}
 
-	public GBConstraints() {
-		this(1, 1);
-	}
-	
 	public void left() {
 		if (gridx > 0) {
 			gridx--;
@@ -38,12 +34,22 @@ public class GBConstraints extends GridBagConstraints {
 	}
 	
 	public void right() {
-		if (gridx < (gridwidth-1)) {
-			gridx++;
-			_log.logInfo("right()");
+		gridx++;
+		_log.logInfo(String.format("right() - gridx=%d, gridy=%d", gridx, gridy));
+	}
+	
+	public void up() {
+		if (gridy > 0) {
+			gridy--;
 		}
-		else {
-			_log.logError("Bump x!");
-		}
+	}
+	
+	public void down() {
+		gridy++;
+	}
+	
+	public void nl() {
+		gridx = 0;
+		gridy++;
 	}
 }

@@ -6,10 +6,10 @@ import uk.org.wookey.vecsys.cpus.CPUState;
 import uk.org.wookey.vecsys.cpus.STATEPanel;
 
 public class CpuState extends CPUState {
-	private STATEPanel statePanel;
+	private StatePanel statePanel;
 	
 	public CpuState() {
-		statePanel = new STATEPanel();
+		statePanel = new StatePanel();
 	}
 	
 	@Override
