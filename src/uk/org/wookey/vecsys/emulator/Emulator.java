@@ -1,13 +1,17 @@
 package uk.org.wookey.vecsys.emulator;
 
-import uk.org.wookey.vecsys.cpus.CPU;
-import uk.org.wookey.vecsys.cpus.STATEPanel;
+import uk.org.wookey.vecsys.cpus.Cpu;
+import uk.org.wookey.vecsys.cpus.StatePanel;
 
 public abstract class Emulator {
 	protected Bus bus;
-	protected CPU cpu;
+	protected Cpu cpu;
 	
-	public STATEPanel getStatePanel() {
+	public StatePanel getStatePanel() {
 		return cpu.getStatePanel();
+	}
+	
+	public void step() {
+		cpu.step();
 	}
 }

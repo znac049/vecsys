@@ -4,10 +4,10 @@ import javax.swing.JPanel;
 
 import com.loomcom.symon.Cpu6502;
 
-import uk.org.wookey.vecsys.cpus.CPUState;
-import uk.org.wookey.vecsys.cpus.STATEPanel;
+import uk.org.wookey.vecsys.cpus.CpuState;
+import uk.org.wookey.vecsys.cpus.StatePanel;
 
-public class CpuState extends CPUState {
+public class CpuState6502 extends CpuState {
 	public int pc;
 	public int ir;
 	public int a;
@@ -24,10 +24,10 @@ public class CpuState extends CPUState {
     public boolean breakFlag;
     public boolean overflowFlag;
     
-	private StatePanel statePanel;
+	private StatePanel6502 statePanel;
 	
-	public CpuState() {
-		statePanel = new StatePanel();
+	public CpuState6502() {
+		statePanel = new StatePanel6502();
 		statePanel.rebuild(this);
 	}
 	
@@ -72,7 +72,7 @@ public class CpuState extends CPUState {
 	}
 
 	@Override
-	public STATEPanel getStatePanel() {
+	public StatePanel getStatePanel() {
 		return statePanel;
 	}
 }

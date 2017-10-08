@@ -3,11 +3,12 @@ package uk.org.wookey.vecsys.cpus.cpu6502;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 
-import uk.org.wookey.vecsys.cpus.STATEPanel;
+import uk.org.wookey.vecsys.cpus.CpuState;
+import uk.org.wookey.vecsys.cpus.StatePanel;
 import uk.org.wookey.vecsys.emulator.TTLabel;
 import uk.org.wookey.vecsys.emulator.GBConstraints;
 
-public class StatePanel extends STATEPanel {
+public class StatePanel6502 extends StatePanel {
 	private static final long serialVersionUID = 1L;
 	
 	private TTLabel pcReg;
@@ -18,7 +19,7 @@ public class StatePanel extends STATEPanel {
 	private TTLabel spReg;
 	private TTLabel flagStr;
 
-	public StatePanel() {
+	public StatePanel6502() {
 		super();
 		
 		GBConstraints gbc = new GBConstraints();
@@ -75,13 +76,16 @@ public class StatePanel extends STATEPanel {
 		add(flagStr, gbc);
 	}
 	
+	@Override
 	public void rebuild(CpuState state) {
-		pcReg.setText(String.format("%04x", state.pc));
-		aReg.setText(String.format("%02x", state.a));
-		xReg.setText(String.format("%02x", state.x));
-		yReg.setText(String.format("%02x", state.y));
-		sReg.setText(String.format("%02x", state.getStatusFlag()));
-		spReg.setText(String.format("1%02x", state.sp));
+		CpuState6502 st = (CpuState6502) state;
+		
+		pcReg.setText(String.format("%04x", st.pc));
+		aReg.setText(String.format("%02x", st.a));
+		xReg.setText(String.format("%02x", st.x));
+		yReg.setText(String.format("%02x", st.y));
+		sReg.setText(String.format("%02x", st.getStatusFlag()));
+		spReg.setText(String.format("1%02x", st.sp));
 		//flagStr.setText(String.format("%08b", state.getStatusFlag()));
 	}
 }

@@ -7,19 +7,23 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 
 import DVG.AboutWindow;
+import javafx.scene.control.ToggleButton;
 import uk.org.wookey.vecsys.utils.Logger;
 
 public class MainWindow extends JFrame {
 	private static final long serialVersionUID = 1L;
-	private static final Logger _logger = new Logger("MainWindow");
+	private static final Logger _log = new Logger("MainWindow");
 
 	public class MainMenuBar extends JMenuBar implements ActionListener {
 		private static final long serialVersionUID = 1L;
@@ -29,7 +33,7 @@ public class MainWindow extends JFrame {
 		private static final String HELP_TEXT = "Help";
 		private static final String ABOUT_TEXT = "About";
 		
-		private final Logger _logger = new Logger("MainMenu");
+		private final Logger _log = new Logger("MainMenu");
 		
 		public MainMenuBar() {
 			JMenu fileMenu = new JMenu(FILE_TEXT);
@@ -61,7 +65,7 @@ public class MainWindow extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			String cmd = e.getActionCommand();
 			
-			_logger.logInfo("Main menu click: '" + cmd + "'");
+			_log.logInfo("Main menu click: '" + cmd + "'");
 			
 			if (cmd.equalsIgnoreCase(EXIT_TEXT)) {
 				System.exit(0);
@@ -78,7 +82,7 @@ public class MainWindow extends JFrame {
 	public MainWindow(Emulator emulator) {
 		super("VecSys");
 		
-		_logger.logMsg("And we're off!");
+		_log.logMsg("And we're off!");
 		
 		Container cp = getContentPane();
 		GBConstraints gbc = new GBConstraints();
@@ -90,7 +94,31 @@ public class MainWindow extends JFrame {
 		MainMenuBar menu = new MainMenuBar();
 		setJMenuBar(menu);
 		
+		gbc.gridwidth = 3;
 		cp.add(emulator.getStatePanel(), gbc);
+		gbc.nl();
+		gbc.gridwidth = 1;
+		
+		JButton stepButton = new JButton("Step");
+		cp.add(stepButton, gbc);
+		stepButton.addActionListener(new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				_log.logInfo("Step cliclked");
+				emulator.step();
+			}
+		});
+		
+		gbc.right();
+		JButton goButton = new JButton("Go");
+		cp.add(goButton,  gbc);
+		
+		gbc.right();
+		JButton stopButton = new JButton("Stop");
+		cp.add(stopButton,  gbc);
+		
+		gbc.right();
+		JToggleButton testMode = new JToggleButton("Test");
+		cp.add(testMode, gbc);
 		pack();
 		setLocationRelativeTo(null);
 		setVisible(true);

@@ -2,7 +2,7 @@ package uk.org.wookey.vecsys.emulator;
 
 import java.io.IOException;
 
-import uk.org.wookey.vecsys.cpus.CPU;
+import uk.org.wookey.vecsys.cpus.Cpu;
 import uk.org.wookey.vecsys.cpus.cpu6502.Cpu6502;
 import uk.org.wookey.vecsys.cpus.cpu6x09.Cpu6x09;
 import uk.org.wookey.vecsys.utils.Logger;
