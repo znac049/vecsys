@@ -2,18 +2,23 @@ package uk.org.wookey.vecsys.cpus.cpu6502;
 
 import javax.swing.JPanel;
 
-import com.loomcom.symon.Cpu6502;
+import com.loomcom.symon.CpuLoomcom;
 
 import uk.org.wookey.vecsys.cpus.CpuState;
 import uk.org.wookey.vecsys.cpus.StatePanel;
 
 public class CpuState6502 extends CpuState {
 	public int pc;
-	public int ir;
 	public int a;
 	public int x;
 	public int y;
 	public int sp;
+
+	public int ir;
+    public int[] args = new int[2];
+	
+	public int nextIr;
+    public int[] nextArgs = new int[2];
 	
 	// The flags that make up the status register
     public boolean carryFlag;
@@ -35,31 +40,31 @@ public class CpuState6502 extends CpuState {
         int sr = 0x20;
         
         if (carryFlag) {
-            sr |= Cpu6502.P_CARRY;
+            sr |= CpuLoomcom.P_CARRY;
         }
         
         if (zeroFlag) {
-            sr |= Cpu6502.P_ZERO;
+            sr |= CpuLoomcom.P_ZERO;
         }
         
         if (irqDisableFlag) {
-            sr |= Cpu6502.P_IRQ_DISABLE;
+            sr |= CpuLoomcom.P_IRQ_DISABLE;
         }
         
         if (decimalModeFlag) {
-            sr |= Cpu6502.P_DECIMAL;
+            sr |= CpuLoomcom.P_DECIMAL;
         }
         
         if (breakFlag) {
-            sr |= Cpu6502.P_BREAK;
+            sr |= CpuLoomcom.P_BREAK;
         }
         
         if (overflowFlag) {
-            sr |= Cpu6502.P_OVERFLOW;
+            sr |= CpuLoomcom.P_OVERFLOW;
         }
         
         if (negativeFlag) {
-            sr |= Cpu6502.P_NEGATIVE;
+            sr |= CpuLoomcom.P_NEGATIVE;
         }
         
         return sr;
