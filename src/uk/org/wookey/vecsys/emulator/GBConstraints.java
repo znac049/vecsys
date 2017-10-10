@@ -11,20 +11,7 @@ public class GBConstraints extends GridBagConstraints {
 	public GBConstraints() {
 		super();
 		
-		gridx = 0;
-		gridy = 0;
-		
-		gridwidth = 1;
-		gridheight = 1;
-		
-		weightx = 0.5;
-		weighty = 0.0;
-		
-		insets = new Insets(2, 2, 2, 2);
-		
-		fill = GridBagConstraints.BOTH;
-		
-		anchor = GridBagConstraints.PAGE_START;
+		clear();
 	}
 
 	public void left() {
@@ -51,5 +38,22 @@ public class GBConstraints extends GridBagConstraints {
 	public void nl() {
 		gridx = 0;
 		gridy++;
+	}
+
+	public void clear() {		
+		gridx = 0;
+		gridy = 0;
+		
+		gridwidth = 1;
+		gridheight = 1;
+		
+		weightx = 0.5;
+		weighty = 0.5;
+		
+		insets = new Insets(2, 2, 2, 2);
+		
+		fill = GridBagConstraints.BOTH;
+		
+		anchor = GridBagConstraints.PAGE_START;
 	}
 }

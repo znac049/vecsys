@@ -7,7 +7,7 @@ public class Instruction {
 	public String name;
 	public int cycles;
 	public int size;
-	private Mode mode;
+	public Mode mode;
 	
 	public Instruction(int opcode, String name, int size, Mode imp, int cycles) {
 		this.opcode = opcode;
@@ -15,5 +15,9 @@ public class Instruction {
 		this.cycles = cycles;
 		this.size = size;
 		this.mode = imp;
+	}
+	
+	public String toString() {
+		return name;
 	}
 }

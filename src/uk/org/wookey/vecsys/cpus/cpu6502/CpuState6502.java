@@ -19,6 +19,7 @@ public class CpuState6502 extends CpuState {
 	
 	public int nextIr;
     public int[] nextArgs = new int[2];
+    public Instruction nextInstruction;
 	
 	// The flags that make up the status register
     public boolean carryFlag;
@@ -79,5 +80,73 @@ public class CpuState6502 extends CpuState {
 	@Override
 	public StatePanel getStatePanel() {
 		return statePanel;
+	}
+
+	public String decodeNextInstruction() {
+		switch (nextInstruction.mode) {
+		case ACC:
+			return "A";
+			
+		case AIX:
+			return "???AIX";
+			
+		case ABS:
+			return String.format("$%02x%02x", nextArgs[1], nextArgs[0]);
+			
+		case ABX:
+			return String.format("$%02x%02x,X", nextArgs[1], nextArgs[0]);
+			
+		case ABY:
+			return String.format("$%02x%02x,Y", nextArgs[1], nextArgs[0]);
+			
+		case IMM:
+			return String.format("#$%02x", nextArgs[0]);
+			
+		case IMP:
+			return "";
+			
+		case IND:
+			return String.format("($%02x%02x)", nextArgs[1], nextArgs[0]);
+			
+		case XIN:
+			return String.format("($%02x,X)", nextArgs[0]);
+			
+		case INY:
+			return String.format("($%02x),Y", nextArgs[0]);
+			
+		case REL:
+			int target;
+			
+			if ((nextArgs[0] & 0x80) != 0) {
+				target = pc + 2 - ((~nextArgs[0] & 0xff)+1);
+			}
+			else {
+				target = pc + 2 + nextArgs[0];
+			}
+			return String.format("$%04x", target);
+			
+		case ZPG:
+			return String.format("$%02x", nextArgs[0]);
+			
+		case ZPR:
+			return "???ZPR";
+			
+		case ZPX:
+			return String.format("$%02x,X", nextArgs[0]);
+			
+		case ZPY:
+			return String.format("$%02x,Y", nextArgs[0]);
+			
+		case ZPI:
+			break;
+			
+		case NUL:
+			return "???NUL";
+			
+		default:
+			return "???";
+		}
+		
+		return "";
 	}
 }

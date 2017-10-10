@@ -418,6 +418,7 @@ public class Cpu6502 extends Cpu {
         state.overflowFlag = false;
         state.negativeFlag = false;
 
+        fetchNextInstruction();
 		
 		state.getStatePanel().rebuild(state);
 	}
@@ -425,7 +426,15 @@ public class Cpu6502 extends Cpu {
 	public Instruction fetchNextInstruction() {
 		state.nextIr = bus.getByte(state.pc);
 		
-		return null;		
+		state.nextInstruction = instructions[state.nextIr];
+		
+		for (int i=1; i<state.nextInstruction.size; i++) {
+			state.nextArgs[i-1] = bus.getByte(state.pc+i);
+		}
+		
+		_log.logInfo(String.format("Instruction at $%04x: %s %s", state.pc, state.nextInstruction.toString(), state.decodeNextInstruction()));
+		
+		return state.nextInstruction;
 	}
 
 	@Override
@@ -440,8 +449,10 @@ public class Cpu6502 extends Cpu {
 
 	@Override
 	public void step() {
-		// TODO Auto-generated method stub
+		Instruction inst = fetchNextInstruction();
 		
+		state.pc += inst.size;
+		state.getStatePanel().rebuild(state);
 	}
 
 	@Override

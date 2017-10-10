@@ -116,9 +116,13 @@ public class MainWindow extends JFrame {
 		JButton stopButton = new JButton("Stop");
 		cp.add(stopButton,  gbc);
 		
-		gbc.right();
-		JToggleButton testMode = new JToggleButton("Test");
-		cp.add(testMode, gbc);
+		gbc.nl();
+		gbc.gridwidth = 3;
+		cp.add(emulator.getConfigPanel(), gbc);
+		
+		gbc.nl();
+		cp.add(emulator.getControlsPanel(), gbc);
+		
 		pack();
 		setLocationRelativeTo(null);
 		setVisible(true);
