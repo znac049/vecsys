@@ -1,12 +1,7 @@
 package uk.org.wookey.vecsys.cpus.cpu6502;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Font;
-
-import javax.swing.JLabel;
 import uk.org.wookey.vecsys.cpus.Cpu;
-import uk.org.wookey.vecsys.cpus.AbstractStatePanel;
+import uk.org.wookey.vecsys.cpus.StatusPanel;
 import uk.org.wookey.vecsys.utils.Logger;
 
 public class Cpu6502 extends Cpu {
@@ -24,9 +19,6 @@ public class Cpu6502 extends Cpu {
 
     public static final int RESET_VEC = 0xfffc;
 	private CpuState6502 state;
-	private JLabel codeLabel;
-	
-	private AbstractStatePanel statePanel;
 	
     public enum Mode {
         ACC {
@@ -407,17 +399,6 @@ public class Cpu6502 extends Cpu {
 	
 	public Cpu6502() {
 		state = new CpuState6502();
-		
-		statePanel = new StatePanel6502();
-		statePanel.setLayout(new BorderLayout());
-		
-		statePanel.add(state.getStatePanel(), BorderLayout.NORTH);
-		
-		codeLabel = new JLabel("Woooooo!");
-		codeLabel.setFont(new Font("Monospaced", Font.PLAIN, 16));
-		codeLabel.setForeground(Color.WHITE);
-		
-		statePanel.add(codeLabel, BorderLayout.SOUTH);
 	}
 	
 	@Override
@@ -437,12 +418,8 @@ public class Cpu6502 extends Cpu {
         state.overflowFlag = false;
         state.negativeFlag = false;
 
-        fetchNextInstruction();
-		
-        codeLabel.setText(state.decodeNextInstruction());
-        updateCode();
-		state.getStatePanel().redraw(state);
-	}
+        fetchNextInstruction();		
+ 	}
 	
 	public Instruction fetchNextInstruction() {
 		state.nextIr = bus.getByte(state.pc);
@@ -464,39 +441,25 @@ public class Cpu6502 extends Cpu {
 	}
 
 	@Override
-	public AbstractStatePanel getStatePanel() {
-		return statePanel;
-	}
-
-	@Override
 	public void step() {
 		Instruction inst = fetchNextInstruction();
 		
 		state.pc += inst.size;
-		
-		updateCode();
-		state.getStatePanel().redraw(state);
 	}
 	
-	private void updateCode() {
-		String bytes = String.format("%02X",  state.nextInstruction.opcode);
-		
-		for (int i=0; i<2; i++) {
-			bytes += (i<(state.nextInstruction.size-1))?String.format(" %02X", state.nextArgs[i]):"   "; 
-		}
-		
-        codeLabel.setText(String.format("%04X %s %s %s", state.pc, bytes, state.nextInstruction.toString(), state.decodeNextInstruction()));
-	}
-
 	@Override
 	public void go() {
-		// TODO Auto-generated method stub
-		
+		// TODO Auto-generated method stub	
 	}
 
 	@Override
 	public void stop() {
+		// TODO Auto-generated method stub	
+	}
+
+	@Override
+	public StatusPanel getStatusPanel() {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 }

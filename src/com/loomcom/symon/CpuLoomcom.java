@@ -24,12 +24,16 @@
 package com.loomcom.symon;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
-import uk.org.wookey.vecsys.cpus.AbstractStatePanel;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
 import uk.org.wookey.vecsys.cpus.Cpu;
-import uk.org.wookey.vecsys.cpus.CpuState;
-import uk.org.wookey.vecsys.cpus.cpu6502.StatePanel6502;
+import uk.org.wookey.vecsys.cpus.StatusPanel;
 import uk.org.wookey.vecsys.emulator.Bus;
 import uk.org.wookey.vecsys.emulator.GBConstraints;
 import uk.org.wookey.vecsys.emulator.TTLabel;
@@ -82,11 +86,136 @@ public class CpuLoomcom extends Cpu implements InstructionTable {
     /* start time of op execution, needed for speed simulation */
     private long opBeginTime;
     
+    private class CpuStatusPanel extends StatusPanel {
+    	private TTLabel pcReg;
+    	private TTLabel aReg;
+    	private TTLabel xReg;
+    	private TTLabel yReg;
+    	private TTLabel sReg;
+    	private TTLabel spReg;
+    	private TTLabel flagStr;
+    	
+    	private TTLabel codeStr;
+    	
+    	public CpuStatusPanel() {
+    		super();
+    		setLayout(new GridBagLayout());
+    		
+    		Color headingColour = Color.YELLOW;
+    		
+    		JPanel registers = new JPanel();
+    		registers.setLayout(new GridBagLayout());
+    		registers.setBackground(Color.DARK_GRAY);
+    		
+    		GBConstraints gbc = new GBConstraints();
+    		gbc.anchor = GridBagConstraints.CENTER;
+    		gbc.fill = GridBagConstraints.NONE;
+    		
+    		registers.add(new TTLabel("PC", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("A", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("X", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("Y", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("SR", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("SP", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("NV-BDIZC", headingColour), gbc);
+    		
+    		gbc.nl();
+    		
+    		pcReg = new TTLabel("----");
+    		registers.add(pcReg, gbc);
+    		gbc.right();
+    		
+    		aReg = new TTLabel("--");
+    		registers.add(aReg, gbc);
+    		gbc.right();
+    		
+    		xReg = new TTLabel("--");
+    		registers.add(xReg, gbc);
+    		gbc.right();
+    		
+    		yReg = new TTLabel("--");
+    		registers.add(yReg, gbc);
+    		gbc.right();
+    		
+    		sReg = new TTLabel("--");
+    		registers.add(sReg, gbc);
+    		gbc.right();
+    		
+    		spReg = new TTLabel("---");
+    		registers.add(spReg, gbc);
+    		gbc.right();
+    		
+    		flagStr = new TTLabel("--------");
+    		registers.add(flagStr, gbc);
+    		gbc.nl();
+    		
+    		gbc.reset();
+    		add(registers, gbc);
+    		gbc.nl();
+    		
+    		JLabel spacer = new JLabel("X");
+    		spacer.setMinimumSize(new Dimension(spacer.getMinimumSize().width, 50));
+    		add(spacer, gbc);
+    		gbc.nl();
+    		
+    		JPanel codePanel = new JPanel();
+    		codePanel.setLayout(new BorderLayout());
+    		
+    		codePanel.setBackground(Color.DARK_GRAY);
+    		
+    		codeStr = new TTLabel("????");
+    		codePanel.add(codeStr, BorderLayout.WEST);
+    		
+    		add(codePanel, gbc);
+    	}
+    	
+		@Override
+		public void update() {
+			if (isEnabled()) {
+				pcReg.setText(String.format("%04X", state.pc));
+				aReg.setText(String.format("%02X", state.a));
+				xReg.setText(String.format("%02X", state.x));
+				yReg.setText(String.format("%02X", state.y));
+				sReg.setText(String.format("%02X", state.getStatusFlag()));
+				spReg.setText(String.format("1%02X", state.sp));
+				flagStr.setText(VecUtils.binaryString(state.getStatusFlag(), 8));
+			
+				codeStr.setText(getCodeString());
+			}
+		}
+		
+		private String getCodeString() {
+			String src = String.format("%04X: %02X", state.pc, state.nextIr);
+			
+			for (int i=1; i<2; i++) {
+				src += (i<state.instSize)?String.format(" %02X", state.nextArgs[i-1]):"   ";
+			}
+			
+			return src + " " + disassembleNextOp();
+		}
+    }
+    
+    CpuStatusPanel statusPanel;
+    
     /**
      * Construct a new CPU.
      */
     public CpuLoomcom() {
-        this.behavior = CpuBehavior.NMOS_6502;
+        behavior = CpuBehavior.NMOS_6502;
+        
+        statusPanel = new CpuStatusPanel();
     }
     
     /**
@@ -153,7 +282,7 @@ public class CpuLoomcom extends Cpu implements InstructionTable {
         state.y = 0;
 
         peekAhead();
-        state.statePanel.redraw(state);
+        statusPanel.update();
     }
 
     public void step(int num) {
@@ -1243,7 +1372,7 @@ public class CpuLoomcom extends Cpu implements InstructionTable {
 
         // Peek ahead to the next insturction and arguments
         peekAhead();
-        state.statePanel.redraw(state);
+        statusPanel.update();
     }
 
     private void peekAhead() {
@@ -1989,19 +2118,15 @@ public class CpuLoomcom extends Cpu implements InstructionTable {
 	}
 
 	@Override
-	public AbstractStatePanel getStatePanel() {
-		return state.getStatePanel();
-	}
-
-	@Override
 	public void go() {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void stop() {
-		// TODO Auto-generated method stub
-		
+	}
+
+	@Override
+	public StatusPanel getStatusPanel() {
+		return statusPanel;
 	}
 }

@@ -3,8 +3,8 @@ package com.loomcom.symon;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 
-import uk.org.wookey.vecsys.cpus.AbstractStatePanel;
-import uk.org.wookey.vecsys.cpus.CpuState;
+import javax.swing.JPanel;
+
 import uk.org.wookey.vecsys.emulator.GBConstraints;
 import uk.org.wookey.vecsys.emulator.TTLabel;
 import uk.org.wookey.vecsys.utils.VecUtils;
@@ -12,7 +12,7 @@ import uk.org.wookey.vecsys.utils.VecUtils;
 /**
  * A compact, struct-like representation of CPU state.
  */
-public class CpuStateLoomcom extends CpuState {
+public class CpuStateLoomcom {
     /**
      * Accumulator
      */
@@ -65,91 +65,7 @@ public class CpuStateLoomcom extends CpuState {
     public boolean overflowFlag;
     public long stepCounter = 0L;
 
-    public class StatePanel extends AbstractStatePanel {
-    	private TTLabel pcReg;
-    	private TTLabel aReg;
-    	private TTLabel xReg;
-    	private TTLabel yReg;
-    	private TTLabel sReg;
-    	private TTLabel spReg;
-    	private TTLabel flagStr;
-
-    	public StatePanel() {
-    		super();
-    		
-    		GBConstraints gbc = new GBConstraints();
-    		gbc.anchor = GridBagConstraints.CENTER;
-    		gbc.fill = GridBagConstraints.NONE;
-    		
-    		add(new TTLabel("PC", headingColour), gbc);
-    		gbc.right();
-    		
-    		add(new TTLabel("A", headingColour), gbc);
-    		gbc.right();
-    		
-    		add(new TTLabel("X", headingColour), gbc);
-    		gbc.right();
-    		
-    		add(new TTLabel("Y", headingColour), gbc);
-    		gbc.right();
-    		
-    		add(new TTLabel("SR", headingColour), gbc);
-    		gbc.right();
-    		
-    		add(new TTLabel("SP", headingColour), gbc);
-    		gbc.right();
-    		
-    		add(new TTLabel("NV-BDIZC", headingColour), gbc);
-    		
-    		gbc.nl();
-    		
-    		pcReg = new TTLabel("----");
-    		add(pcReg, gbc);
-    		gbc.right();
-    		
-    		aReg = new TTLabel("--");
-    		add(aReg, gbc);
-    		gbc.right();
-    		
-    		xReg = new TTLabel("--");
-    		add(xReg, gbc);
-    		gbc.right();
-    		
-    		yReg = new TTLabel("--");
-    		add(yReg, gbc);
-    		gbc.right();
-    		
-    		sReg = new TTLabel("--");
-    		add(sReg, gbc);
-    		gbc.right();
-    		
-    		spReg = new TTLabel("---");
-    		add(spReg, gbc);
-    		gbc.right();
-    		
-    		flagStr = new TTLabel("--------");
-    		add(flagStr, gbc);
-    	}
-
-		@Override
-		public void redraw(CpuState state) {
-			CpuStateLoomcom st = (CpuStateLoomcom)state;
-			
-			pcReg.setText(String.format("%04x", st.pc));
-			aReg.setText(String.format("%02x", st.a));
-			xReg.setText(String.format("%02x", st.x));
-			yReg.setText(String.format("%02x", st.y));
-			sReg.setText(String.format("%02x", st.getStatusFlag()));
-			spReg.setText(String.format("1%02x", st.sp));
-			flagStr.setText(VecUtils.binaryString(st.getStatusFlag(), 8));
-			
-		}
-    }
-    
-    StatePanel statePanel;
-    
     public CpuStateLoomcom() {        
-		statePanel = new StatePanel();
     }
 
     /**
@@ -256,15 +172,4 @@ public class CpuStateLoomcom extends CpuState {
                 (carryFlag ? 'C' : '.') +
                 "]";
     }
-
-	@Override
-	public void reset() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public AbstractStatePanel getStatePanel() {
-		return statePanel;
-	}
 }

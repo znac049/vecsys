@@ -12,9 +12,9 @@ public abstract class Cpu {
 	public abstract void reset();
 	public abstract boolean isBigEndian();
 	public abstract void step();
-	public abstract AbstractStatePanel getStatePanel();
 	public abstract void go();
 	public abstract void stop();
+	public abstract StatusPanel getStatusPanel();
 
 	public void step(int numSteps) {
 		for (int i=0; i<numSteps; i++) {

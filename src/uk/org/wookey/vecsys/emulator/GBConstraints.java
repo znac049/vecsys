@@ -11,7 +11,7 @@ public class GBConstraints extends GridBagConstraints {
 	public GBConstraints() {
 		super();
 		
-		clear();
+		reset();
 	}
 
 	public void left() {
@@ -39,7 +39,7 @@ public class GBConstraints extends GridBagConstraints {
 		gridy++;
 	}
 
-	public void clear() {		
+	public void reset() {		
 		gridx = 0;
 		gridy = 0;
 		

@@ -24,6 +24,10 @@ import uk.org.wookey.vecsys.utils.Logger;
 public class MainWindow extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private static final Logger _log = new Logger("MainWindow");
+	
+	private JButton stepButton;
+	private JButton goButton;
+	private JButton stopButton;
 
 	public class MainMenuBar extends JMenuBar implements ActionListener {
 		private static final long serialVersionUID = 1L;
@@ -82,7 +86,7 @@ public class MainWindow extends JFrame {
 	public MainWindow(Emulator emulator) {
 		super("VecSys");
 		
-		_log.logMsg("And we're off!");
+		GameStatus.setRunning(false);
 		
 		Container cp = getContentPane();
 		GBConstraints gbc = new GBConstraints();
@@ -95,11 +99,11 @@ public class MainWindow extends JFrame {
 		setJMenuBar(menu);
 		
 		gbc.gridwidth = 3;
-		cp.add(emulator.getStatePanel(), gbc);
+		cp.add(emulator.getStatusPanel(), gbc);
 		gbc.nl();
 		gbc.gridwidth = 1;
 		
-		JButton stepButton = new JButton("Step");
+		stepButton = new JButton("Step");
 		cp.add(stepButton, gbc);
 		stepButton.addActionListener(new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
@@ -109,12 +113,35 @@ public class MainWindow extends JFrame {
 		});
 		
 		gbc.right();
-		JButton goButton = new JButton("Go");
+		goButton = new JButton("Go");
 		cp.add(goButton,  gbc);
+		goButton.addActionListener(new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				_log.logInfo("GO cliclked");
+				stepButton.setEnabled(false);
+				goButton.setEnabled(false);
+				stopButton.setEnabled(true);
+				GameStatus.setRunning(true);
+				emulator.getStatusPanel().turnOff();
+			}
+		});
 		
 		gbc.right();
-		JButton stopButton = new JButton("Stop");
+		stopButton = new JButton("Stop");
 		cp.add(stopButton,  gbc);
+		stopButton.addActionListener(new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				_log.logInfo("STOP cliclked");
+				GameStatus.setRunning(false);
+				emulator.getStatusPanel().turnOn();
+				stepButton.setEnabled(true);
+				goButton.setEnabled(true);
+				stopButton.setEnabled(false);
+				emulator.getStatusPanel().update();
+			}
+		});
+		stopButton.setEnabled(false);
+		
 		
 		gbc.nl();
 		gbc.gridwidth = 3;
@@ -122,6 +149,21 @@ public class MainWindow extends JFrame {
 		
 		gbc.nl();
 		cp.add(emulator.getControlsPanel(), gbc);
+		
+		Thread runner = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (true) {
+					if (GameStatus.isRunning()) {
+						emulator.step();
+					}
+					
+					Thread.yield();
+				}
+			}
+		});
+		
+		runner.start();
 		
 		pack();
 		setLocationRelativeTo(null);

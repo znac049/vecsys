@@ -1,7 +1,7 @@
 package uk.org.wookey.vecsys.cpus.cpu6x09;
 
 import uk.org.wookey.vecsys.cpus.Cpu;
-import uk.org.wookey.vecsys.cpus.AbstractStatePanel;
+import uk.org.wookey.vecsys.cpus.StatusPanel;
 import uk.org.wookey.vecsys.utils.Logger;
 
 public class Cpu6x09 extends Cpu {
@@ -25,11 +25,6 @@ public class Cpu6x09 extends Cpu {
 	}
 
 	@Override
-	public AbstractStatePanel getStatePanel() {
-		return state.getStatePanel();
-	}
-
-	@Override
 	public void step() {
 		// TODO Auto-generated method stub
 		
@@ -45,5 +40,11 @@ public class Cpu6x09 extends Cpu {
 	public void stop() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public StatusPanel getStatusPanel() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

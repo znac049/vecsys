@@ -3,12 +3,12 @@ package uk.org.wookey.vecsys.cpus.cpu6x09;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 
-import uk.org.wookey.vecsys.cpus.CpuState;
-import uk.org.wookey.vecsys.cpus.AbstractStatePanel;
+import javax.swing.JPanel;
+
 import uk.org.wookey.vecsys.emulator.TTLabel;
 import uk.org.wookey.vecsys.emulator.GBConstraints;
 
-public class StatePanel6x09 extends AbstractStatePanel {
+public class StatePanel6x09 extends JPanel {
 	private static final long serialVersionUID = 1L;
 	
 	private TTLabel pcReg;
@@ -23,6 +23,8 @@ public class StatePanel6x09 extends AbstractStatePanel {
 	private TTLabel ccReg;
 	
 	private TTLabel ccStr;
+	
+	private Color headingColour = Color.YELLOW;
 
 	public StatePanel6x09() {
 		super();
@@ -100,15 +102,5 @@ public class StatePanel6x09 extends AbstractStatePanel {
 		
 		ccStr = new TTLabel("--------");
 		add(ccStr, gbc);
-	}
-	
-	public void update(CpuState6x09 state) {
-		
-	}
-
-	@Override
-	public void redraw(CpuState state) {
-		// TODO Auto-generated method stub
-		
 	}
 }

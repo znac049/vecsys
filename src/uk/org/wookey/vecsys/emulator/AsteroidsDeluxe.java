@@ -5,15 +5,13 @@ import java.awt.GridBagLayout;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 
-import javax.swing.JButton;
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.border.TitledBorder;
 
 import com.loomcom.symon.CpuLoomcom;
 
-import uk.org.wookey.vecsys.cpus.AbstractStatePanel;
-import uk.org.wookey.vecsys.cpus.Cpu;
-import uk.org.wookey.vecsys.cpus.cpu6502.Cpu6502;
-import uk.org.wookey.vecsys.cpus.cpu6x09.Cpu6x09;
+import uk.org.wookey.vecsys.cpus.StatusPanel;
 import uk.org.wookey.vecsys.utils.Logger;
 
 public class AsteroidsDeluxe extends Emulator {
@@ -51,7 +49,7 @@ public class AsteroidsDeluxe extends Emulator {
 		ButtonDevice rightButton = new ButtonDevice("D", 0x80, 0, KeyEvent.VK_D); 
 		bus.attach(0x2406, rightButton);
 		
-		ButtonDevice shieldButton = new ButtonDevice("<SPACE>", 0x80, 0, KeyEvent.VK_SPACE); 
+		ButtonDevice shieldButton = new ButtonDevice("SP", 0x80, 0, KeyEvent.VK_SPACE); 
 		bus.attach(0x2003, shieldButton);
 		
 		ButtonDevice fireButton = new ButtonDevice("K", 0x80, 0, KeyEvent.VK_K);
@@ -62,6 +60,9 @@ public class AsteroidsDeluxe extends Emulator {
 		
 		SwitchDevice selfTest = new SwitchDevice("SelfTest", 0x80, 0);
 		bus.attach(0x2007, selfTest);
+		
+		Pokey pokey = new Pokey();
+		bus.attach(0x2c00, 0x2c0f, pokey);
 		
 		cpu = new CpuLoomcom();
 		cpu.setBus(bus);
@@ -81,6 +82,10 @@ public class AsteroidsDeluxe extends Emulator {
 		gbc.weightx = 0.0;
 		
 		configPanel = new JPanel();
+        final TitledBorder tb =
+                BorderFactory.createTitledBorder("CPU Status");
+
+		configPanel.setBorder(tb);
 		configPanel.setMinimumSize(new Dimension(300, 100));
 		configPanel.setLayout(new GridBagLayout());
 
@@ -90,7 +95,7 @@ public class AsteroidsDeluxe extends Emulator {
 		controlPanel.setMinimumSize(new Dimension(200, 50));
 		controlPanel.setLayout(new GridBagLayout());
 		
-		gbc.clear();
+		gbc.reset();
 		controlPanel.add(leftButton.getComponent(),  gbc);
 		gbc.right();
 		
@@ -119,7 +124,7 @@ public class AsteroidsDeluxe extends Emulator {
 	}
 
 	@Override
-	public AbstractStatePanel getStatePanel() {
-		return cpu.getStatePanel();
+	public StatusPanel getStatusPanel() {
+		return cpu.getStatusPanel();
 	}
 }
