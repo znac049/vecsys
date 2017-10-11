@@ -12,6 +12,12 @@ import javax.swing.border.TitledBorder;
 import com.loomcom.symon.CpuLoomcom;
 
 import uk.org.wookey.vecsys.cpus.StatusPanel;
+import uk.org.wookey.vecsys.emulator.devices.ButtonDevice;
+import uk.org.wookey.vecsys.emulator.devices.EaromDevice;
+import uk.org.wookey.vecsys.emulator.devices.MemoryDevice;
+import uk.org.wookey.vecsys.emulator.devices.Pokey;
+import uk.org.wookey.vecsys.emulator.devices.SwitchDevice;
+import uk.org.wookey.vecsys.emulator.devices.WatchDogDevice;
 import uk.org.wookey.vecsys.utils.Logger;
 
 public class AsteroidsDeluxe extends Emulator {

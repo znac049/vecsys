@@ -69,7 +69,7 @@ public class MainWindow extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			String cmd = e.getActionCommand();
 			
-			_log.logInfo("Main menu click: '" + cmd + "'");
+			//_log.logInfo("Main menu click: '" + cmd + "'");
 			
 			if (cmd.equalsIgnoreCase(EXIT_TEXT)) {
 				System.exit(0);
@@ -107,7 +107,7 @@ public class MainWindow extends JFrame {
 		cp.add(stepButton, gbc);
 		stepButton.addActionListener(new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
-				_log.logInfo("Step cliclked");
+				//_log.logInfo("Step cliclked");
 				emulator.step();
 			}
 		});
@@ -117,7 +117,7 @@ public class MainWindow extends JFrame {
 		cp.add(goButton,  gbc);
 		goButton.addActionListener(new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
-				_log.logInfo("GO cliclked");
+				//_log.logInfo("GO cliclked");
 				stepButton.setEnabled(false);
 				goButton.setEnabled(false);
 				stopButton.setEnabled(true);
@@ -131,7 +131,7 @@ public class MainWindow extends JFrame {
 		cp.add(stopButton,  gbc);
 		stopButton.addActionListener(new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
-				_log.logInfo("STOP cliclked");
+				//_log.logInfo("STOP cliclked");
 				GameStatus.setRunning(false);
 				emulator.getStatusPanel().turnOn();
 				stepButton.setEnabled(true);
