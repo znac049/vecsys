@@ -16,6 +16,8 @@ public abstract class Emulator {
 	public abstract JPanel getControlsPanel();	
 	public abstract StatusPanel getStatusPanel();
 	
+	public abstract void reset();
+	
 	public void step() {
 		cpu.step();
 	}

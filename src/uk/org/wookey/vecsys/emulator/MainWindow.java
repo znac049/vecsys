@@ -6,6 +6,8 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -28,11 +30,14 @@ public class MainWindow extends JFrame {
 	private JButton stepButton;
 	private JButton goButton;
 	private JButton stopButton;
+	private Emulator emulator;
 
 	public class MainMenuBar extends JMenuBar implements ActionListener {
 		private static final long serialVersionUID = 1L;
 		private static final String FILE_TEXT = "File";
 		private static final String FILE_OPEN_TEXT = "Open";
+		private static final String GAME_TEXT = "Game";
+		private static final String GAME_RESET_TEXT = "Reset";
 		private static final String EXIT_TEXT = "Exit";
 		private static final String HELP_TEXT = "Help";
 		private static final String ABOUT_TEXT = "About";
@@ -55,6 +60,21 @@ public class MainWindow extends JFrame {
 			exitItem.addActionListener(this);
 			fileMenu.add(exitItem);
 			add(fileMenu);
+			
+			JMenu gameMenu = new JMenu(GAME_TEXT);
+			
+			JMenuItem resetItem = new JMenuItem(GAME_RESET_TEXT);
+			resetItem.setMnemonic(KeyEvent.VK_R);
+			resetItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Event.CTRL_MASK));
+			resetItem.addMouseListener(new NullMouseListener() {
+				@Override
+				public void mouseClicked(MouseEvent arg0) {
+					reset();
+				}
+			});
+			gameMenu.add(resetItem);
+			
+			add(gameMenu);
 					
 			JMenu helpMenu = new JMenu(HELP_TEXT);
 			helpMenu.setMnemonic(KeyEvent.VK_H);
@@ -86,6 +106,7 @@ public class MainWindow extends JFrame {
 	public MainWindow(Emulator emulator) {
 		super("VecSys");
 		
+		this.emulator = emulator;
 		GameStatus.setRunning(false);
 		
 		Container cp = getContentPane();
@@ -168,5 +189,12 @@ public class MainWindow extends JFrame {
 		pack();
 		setLocationRelativeTo(null);
 		setVisible(true);
+	}
+	
+	public void reset() {
+		emulator.reset();
+		stopButton.setEnabled(false);
+		goButton.setEnabled(true);
+		stepButton.setEnabled(true);
 	}
 }

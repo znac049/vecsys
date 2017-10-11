@@ -13,10 +13,12 @@ import com.loomcom.symon.CpuLoomcom;
 
 import uk.org.wookey.vecsys.cpus.StatusPanel;
 import uk.org.wookey.vecsys.emulator.devices.ButtonDevice;
+import uk.org.wookey.vecsys.emulator.devices.DVG;
 import uk.org.wookey.vecsys.emulator.devices.EaromDevice;
 import uk.org.wookey.vecsys.emulator.devices.MemoryDevice;
 import uk.org.wookey.vecsys.emulator.devices.Pokey;
 import uk.org.wookey.vecsys.emulator.devices.SwitchDevice;
+import uk.org.wookey.vecsys.emulator.devices.ThreeKHz;
 import uk.org.wookey.vecsys.emulator.devices.WatchDogDevice;
 import uk.org.wookey.vecsys.utils.Logger;
 
@@ -76,6 +78,9 @@ public class AsteroidsDeluxe extends Emulator {
 		EaromDevice earom = new EaromDevice();
 		bus.attach(0x2c40, 0x2c7f, earom, 0);
 		bus.attach(0x3200, 0x323f, earom, 1);
+		
+		ThreeKHz threeK = new ThreeKHz();
+		bus.attach(0x2001, threeK);
 		
 		cpu = new CpuLoomcom();
 		cpu.setBus(bus);
@@ -139,5 +144,11 @@ public class AsteroidsDeluxe extends Emulator {
 	@Override
 	public StatusPanel getStatusPanel() {
 		return cpu.getStatusPanel();
+	}
+
+	@Override
+	public void reset() {
+		GameStatus.setRunning(false);
+		cpu.reset();
 	}
 }

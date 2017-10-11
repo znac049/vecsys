@@ -1,8 +1,8 @@
-package uk.org.wookey.vecsys.emulator;
+package uk.org.wookey.vecsys.emulator.devices;
 
 import java.io.IOException;
 
-import uk.org.wookey.vecsys.emulator.devices.DVGMemory;
+import uk.org.wookey.vecsys.emulator.Device;
 import uk.org.wookey.vecsys.utils.Logger;
 
 public class DVG extends Device {
