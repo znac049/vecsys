@@ -25,7 +25,7 @@ public class SwitchDevice extends Device {
 	}
 
 	@Override
-	public int getByte(int addr) {
+	public int getByte(int addr, int id) {
 		int val = (button.isSelected()) ? onVal : offVal;
 		
 		_log.logInfo(String.format("%s switch -> %d",  name, val));
@@ -34,7 +34,7 @@ public class SwitchDevice extends Device {
 	}
 
 	@Override
-	public void setByte(int addr, int val) throws IllegalAccessException {
+	public void setByte(int addr, int val, int id) throws IllegalAccessException {
 		_log.logWarn(String.format("Write to read-only device %s switch",  name));
 	}
 	

@@ -10,14 +10,14 @@ public class Pokey extends Device {
 	}
 
 	@Override
-	public int getByte(int addr) {
+	public int getByte(int addr, int id) {
 		// TODO Auto-generated method stub
 		_log.logInfo("Read register " + addr);
 		return 0;
 	}
 
 	@Override
-	public void setByte(int addr, int val) throws IllegalAccessException {
+	public void setByte(int addr, int val, int id) throws IllegalAccessException {
 		// TODO Auto-generated method stub
 		_log.logInfo(String.format("Write byte %02x to register %d", val, addr));
 	}

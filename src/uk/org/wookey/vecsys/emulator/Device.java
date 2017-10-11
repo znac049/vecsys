@@ -15,6 +15,6 @@ public abstract class Device {
 		return name;
 	}
 	
-	public abstract int getByte(int addr);
-	public abstract void setByte(int addr, int val) throws IllegalAccessException;
+	public abstract int getByte(int addr, int id);
+	public abstract void setByte(int addr, int val, int id) throws IllegalAccessException;
 }

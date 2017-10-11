@@ -17,12 +17,12 @@ public class DVG extends Device {
 		}
 
 		@Override
-		public int getByte(int addr) {
+		public int getByte(int addr, int id) {
 			return (vgHalted) ? 0x80 : 0;
 		}
 
 		@Override
-		public void setByte(int addr, int val) throws IllegalAccessException {
+		public void setByte(int addr, int val, int id) throws IllegalAccessException {
 			_log.logError("Attempt to read from write-only device");
 		}
 	}
@@ -35,13 +35,13 @@ public class DVG extends Device {
 		}
 
 		@Override
-		public int getByte(int addr) {
+		public int getByte(int addr, int id) {
 			_log.logError("Attempt to read from a write only device");
 			return 0;
 		}
 
 		@Override
-		public void setByte(int addr, int val) throws IllegalAccessException {
+		public void setByte(int addr, int val, int id) throws IllegalAccessException {
 			// TODO Auto-generated method stub
 			
 		}
@@ -55,13 +55,13 @@ public class DVG extends Device {
 		}
 
 		@Override
-		public int getByte(int addr) {
+		public int getByte(int addr, int id) {
 			_log.logError("Attempt to read from a write only device");
 			return 0;
 		}
 
 		@Override
-		public void setByte(int addr, int val) throws IllegalAccessException {
+		public void setByte(int addr, int val, int id) throws IllegalAccessException {
 			// TODO Auto-generated method stub			
 		}
 	}
@@ -98,13 +98,13 @@ public class DVG extends Device {
 	}
 
 	@Override
-	public int getByte(int addr) {
+	public int getByte(int addr, int id) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
-	public void setByte(int addr, int val) throws IllegalAccessException {
+	public void setByte(int addr, int val, int id) throws IllegalAccessException {
 		// TODO Auto-generated method stub
 		
 	}

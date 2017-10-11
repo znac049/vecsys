@@ -47,7 +47,7 @@ public class MemoryDevice extends Device {
 		
 		try {
 			for (i=0; i<bytes.length; i++) {
-				setByte(addr+i, bytes[i]);
+				setByte(addr+i, bytes[i], -1);
 			}
 		} catch (IllegalAccessException e) {
 			// TODO Auto-generated catch block
@@ -60,7 +60,7 @@ public class MemoryDevice extends Device {
 	}
 
 	@Override
-	public int getByte(int addr) {
+	public int getByte(int addr, int id) {
 		if ((addr < 0) || (addr >= size)) {
 			throw new ArrayIndexOutOfBoundsException("MemoryDevice address out of bounds");
 		}
@@ -69,7 +69,7 @@ public class MemoryDevice extends Device {
 	}
 
 	@Override
-	public void setByte(int addr, int val) throws IllegalAccessException {
+	public void setByte(int addr, int val, int id) throws IllegalAccessException {
 		if ((addr < 0) || (addr >= size)) {
 			throw new ArrayIndexOutOfBoundsException("MemoryDevice address out of bounds");
 		}

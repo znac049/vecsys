@@ -82,7 +82,11 @@ public class Bus {
 	}
 	
 	public void attach(int start, int end, Device dev) throws RangeException {
-		attach(new MappedRange(start, end, dev));
+		attach(new MappedRange(start, end, dev, -1));
+	}
+	
+	public void attach(int start, int end, Device dev, int id) throws RangeException {
+		attach(new MappedRange(start, end, dev, id));
 	}
 	
 	public void attach(MappedRange range) throws RangeException {
@@ -133,9 +137,11 @@ public class Bus {
 		
 		MappedRange range = getRange(addr);
 		if (range != null) {
+			Device dev = range.getDevice();
+			
 			addr = addr - range.getStartAddress();
 		
-			return range.getDevice().getByte(addr); 
+			return dev.getByte(addr, range.getId()); 
 		}
 		else {
 			_log.logWarn(String.format("Reading byte from address %04x with no handler", addr));
@@ -158,9 +164,11 @@ public class Bus {
 		
 		MappedRange range = getRange(addr);
 		if (range != null) {
+			Device dev = range.getDevice();
+			
 			addr = addr - range.getStartAddress();
 
-			range.getDevice().setByte(addr, val);
+			dev.setByte(addr, val, range.getId());
 		}
 		else {
 			_log.logWarn(String.format("Writing byte %02x to address %04x with no handler", val, addr));

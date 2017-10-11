@@ -19,21 +19,21 @@ public class DVGMemory extends Device {
 	}
 	
 	@Override
-	public int getByte(int addr) {
+	public int getByte(int addr, int id) {
 		if (addr < 2048) {
-			return vram.getByte(addr);
+			return vram.getByte(addr, id);
 		}
 		
-		return vrom.getByte(addr-2048);
+		return vrom.getByte(addr-2048, id);
 	}
 	
 	@Override
-	public void setByte(int addr, int val) throws IllegalAccessException {
+	public void setByte(int addr, int val, int id) throws IllegalAccessException {
 		if (addr < 2048) {
-			vram.setByte(addr, val);
+			vram.setByte(addr, val, id);
 		}
 		else {		
-			vrom.setByte(addr-2048, val);
+			vrom.setByte(addr-2048, val, id);
 		}
 	}
 }

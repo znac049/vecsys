@@ -38,7 +38,7 @@ public class AsteroidsDeluxe extends Emulator {
 		bus.attach(0, 1024, gameRam);
 		
 		DVG dvg = new DVG();
-		bus.attach(0x2001, dvg.getHaltedFlagDevice());
+		bus.attach(0x2002, dvg.getHaltedFlagDevice());
 		bus.attach(0x3000, dvg.getStartVGDevice());
 		bus.attach(0x3800, dvg.getResetVGDevice());
 		bus.attach(0x4000, 0x57ff, dvg.getVectorMemory());
@@ -63,6 +63,13 @@ public class AsteroidsDeluxe extends Emulator {
 		
 		Pokey pokey = new Pokey();
 		bus.attach(0x2c00, 0x2c0f, pokey);
+		
+		WatchDogDevice watchdog = new WatchDogDevice();
+		bus.attach(0x3400, watchdog);
+		
+		EaromDevice earom = new EaromDevice();
+		bus.attach(0x2c40, 0x2c7f, earom, 0);
+		bus.attach(0x3200, 0x323f, earom, 1);
 		
 		cpu = new CpuLoomcom();
 		cpu.setBus(bus);

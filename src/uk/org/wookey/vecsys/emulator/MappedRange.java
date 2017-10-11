@@ -4,11 +4,17 @@ public class MappedRange {
 	private int startAddress;
 	private int endAddress;
 	private Device device;
+	private int id;
 	
 	public MappedRange(int start, int end, Device dev) {
+		this(start, end, dev, 0);
+	}
+	
+	public MappedRange(int start, int end, Device dev, int newId) {
 		startAddress = start;
 		endAddress = end;
 		device = dev;
+		id = newId;
 	}
 	
 	public int getStartAddress() {
@@ -29,5 +35,9 @@ public class MappedRange {
 
 	public Device getDevice() {
 		return device;
+	}
+	
+	public int getId() {
+		return id;
 	}
 }
