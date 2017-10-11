@@ -4,11 +4,12 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 
 import uk.org.wookey.vecsys.cpus.CpuState;
-import uk.org.wookey.vecsys.cpus.StatePanel;
+import uk.org.wookey.vecsys.cpus.AbstractStatePanel;
 import uk.org.wookey.vecsys.emulator.TTLabel;
+import uk.org.wookey.vecsys.utils.VecUtils;
 import uk.org.wookey.vecsys.emulator.GBConstraints;
 
-public class StatePanel6502 extends StatePanel {
+public class StatePanel6502 extends AbstractStatePanel {
 	private static final long serialVersionUID = 1L;
 	
 	private TTLabel pcReg;
@@ -77,7 +78,7 @@ public class StatePanel6502 extends StatePanel {
 	}
 	
 	@Override
-	public void rebuild(CpuState state) {
+	public void redraw(CpuState state) {
 		CpuState6502 st = (CpuState6502) state;
 		
 		pcReg.setText(String.format("%04x", st.pc));
@@ -86,6 +87,6 @@ public class StatePanel6502 extends StatePanel {
 		yReg.setText(String.format("%02x", st.y));
 		sReg.setText(String.format("%02x", st.getStatusFlag()));
 		spReg.setText(String.format("1%02x", st.sp));
-		//flagStr.setText(String.format("%08b", state.getStatusFlag()));
+		flagStr.setText(VecUtils.binaryString(st.getStatusFlag(), 8));
 	}
 }

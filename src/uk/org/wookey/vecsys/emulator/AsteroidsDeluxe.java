@@ -8,6 +8,9 @@ import java.io.IOException;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import com.loomcom.symon.CpuLoomcom;
+
+import uk.org.wookey.vecsys.cpus.AbstractStatePanel;
 import uk.org.wookey.vecsys.cpus.Cpu;
 import uk.org.wookey.vecsys.cpus.cpu6502.Cpu6502;
 import uk.org.wookey.vecsys.cpus.cpu6x09.Cpu6x09;
@@ -60,7 +63,7 @@ public class AsteroidsDeluxe extends Emulator {
 		SwitchDevice selfTest = new SwitchDevice("SelfTest", 0x80, 0);
 		bus.attach(0x2007, selfTest);
 		
-		cpu = new Cpu6502();
+		cpu = new CpuLoomcom();
 		cpu.setBus(bus);
 		cpu.reset();
 		
@@ -113,5 +116,10 @@ public class AsteroidsDeluxe extends Emulator {
 	@Override
 	public JPanel getControlsPanel() {
 		return controlPanel;
+	}
+
+	@Override
+	public AbstractStatePanel getStatePanel() {
+		return cpu.getStatePanel();
 	}
 }

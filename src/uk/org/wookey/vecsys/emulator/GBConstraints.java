@@ -22,7 +22,6 @@ public class GBConstraints extends GridBagConstraints {
 	
 	public void right() {
 		gridx++;
-		_log.logInfo(String.format("right() - gridx=%d, gridy=%d", gridx, gridy));
 	}
 	
 	public void up() {

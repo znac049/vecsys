@@ -1,7 +1,7 @@
 package uk.org.wookey.vecsys.cpus.cpu6x09;
 
 import uk.org.wookey.vecsys.cpus.Cpu;
-import uk.org.wookey.vecsys.cpus.StatePanel;
+import uk.org.wookey.vecsys.cpus.AbstractStatePanel;
 import uk.org.wookey.vecsys.utils.Logger;
 
 public class Cpu6x09 extends Cpu {
@@ -25,7 +25,7 @@ public class Cpu6x09 extends Cpu {
 	}
 
 	@Override
-	public StatePanel getStatePanel() {
+	public AbstractStatePanel getStatePanel() {
 		return state.getStatePanel();
 	}
 

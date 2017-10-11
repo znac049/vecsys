@@ -5,7 +5,7 @@ import java.awt.Component;
 import javax.swing.JPanel;
 
 import uk.org.wookey.vecsys.cpus.Cpu;
-import uk.org.wookey.vecsys.cpus.StatePanel;
+import uk.org.wookey.vecsys.cpus.AbstractStatePanel;
 
 public abstract class Emulator {
 	protected Bus bus;
@@ -13,11 +13,8 @@ public abstract class Emulator {
 	public Component getControlsPanel;
 
 	public abstract JPanel getConfigPanel();
-	public abstract JPanel getControlsPanel();
-	
-	public StatePanel getStatePanel() {
-		return cpu.getStatePanel();
-	}
+	public abstract JPanel getControlsPanel();	
+	public abstract AbstractStatePanel getStatePanel();
 	
 	public void step() {
 		cpu.step();

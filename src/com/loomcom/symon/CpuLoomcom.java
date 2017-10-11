@@ -23,15 +23,25 @@
 
 package com.loomcom.symon;
 
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+
+import uk.org.wookey.vecsys.cpus.AbstractStatePanel;
+import uk.org.wookey.vecsys.cpus.Cpu;
+import uk.org.wookey.vecsys.cpus.CpuState;
+import uk.org.wookey.vecsys.cpus.cpu6502.StatePanel6502;
 import uk.org.wookey.vecsys.emulator.Bus;
+import uk.org.wookey.vecsys.emulator.GBConstraints;
+import uk.org.wookey.vecsys.emulator.TTLabel;
 import uk.org.wookey.vecsys.utils.Logger;
+import uk.org.wookey.vecsys.utils.VecUtils;
 
 /**
  * This class provides a simulation of the MOS 6502 CPU's state machine.
  * A simple interface allows this 6502 to read and write to a simulated bus,
  * and exposes some of the internal state for inspection and debugging.
  */
-public class CpuLoomcom implements InstructionTable {
+public class CpuLoomcom extends Cpu implements InstructionTable {
 
     private final static Logger _log = new Logger("CPU6502");
 
@@ -71,7 +81,7 @@ public class CpuLoomcom implements InstructionTable {
 
     /* start time of op execution, needed for speed simulation */
     private long opBeginTime;
-
+    
     /**
      * Construct a new CPU.
      */
@@ -109,7 +119,7 @@ public class CpuLoomcom implements InstructionTable {
      * Reset the CPU to known initial values.
      * @throws MemoryAccessException 
      */
-    public void reset() throws MemoryAccessException {
+    public void reset() {
         state.sp = 0xff;
 
         // Set the PC to the address stored in the reset vector
@@ -143,9 +153,10 @@ public class CpuLoomcom implements InstructionTable {
         state.y = 0;
 
         peekAhead();
+        state.statePanel.redraw(state);
     }
 
-    public void step(int num) throws MemoryAccessException {
+    public void step(int num) {
         for (int i = 0; i < num; i++) {
             step();
         }
@@ -155,7 +166,7 @@ public class CpuLoomcom implements InstructionTable {
      * Performs an individual instruction cycle.
      * @throws MemoryAccessException 
      */
-    public void step() throws MemoryAccessException {
+    public void step() {
         opBeginTime = System.nanoTime();
 
         // Store the address from which the IR was read, for debugging
@@ -1232,9 +1243,10 @@ public class CpuLoomcom implements InstructionTable {
 
         // Peek ahead to the next insturction and arguments
         peekAhead();
+        state.statePanel.redraw(state);
     }
 
-    private void peekAhead() throws MemoryAccessException {
+    private void peekAhead() {
         state.nextIr = bus.getByte(state.pc);
         int nextInstSize = CpuLoomcom.instructionSizes[state.nextIr];
         for (int i = 1; i < nextInstSize; i++) {
@@ -1243,17 +1255,17 @@ public class CpuLoomcom implements InstructionTable {
         }
     }
 
-    private void handleBrk(int returnPc) throws MemoryAccessException {
+    private void handleBrk(int returnPc) {
         handleInterrupt(returnPc, IRQ_VECTOR_L, IRQ_VECTOR_H, true);
         clearIrq();
     }
 
-    private void handleIrq(int returnPc) throws MemoryAccessException {
+    private void handleIrq(int returnPc) {
         handleInterrupt(returnPc, IRQ_VECTOR_L, IRQ_VECTOR_H, false);
         clearIrq();
     }
 
-    private void handleNmi() throws MemoryAccessException {
+    private void handleNmi() {
         handleInterrupt(state.pc, NMI_VECTOR_L, NMI_VECTOR_H, false);
         clearNmi();
     }
@@ -1263,7 +1275,7 @@ public class CpuLoomcom implements InstructionTable {
      *
      * @throws MemoryAccessException
      */
-    private void handleInterrupt(int returnPc, int vectorLow, int vectorHigh, boolean isBreak) throws MemoryAccessException {
+    private void handleInterrupt(int returnPc, int vectorLow, int vectorHigh, boolean isBreak) {
 
         if (isBreak)
         {
@@ -1670,13 +1682,7 @@ public class CpuLoomcom implements InstructionTable {
     public void setProgramCounter(int addr) {
         state.pc = addr;
 
-        // As a side-effect of setting the program counter,
-        // we want to peek ahead at the next state.
-        try {
-            peekAhead();
-        } catch (MemoryAccessException ex) {
-            _log.logError("Could not peek ahead at next instruction state.");
-        }
+        peekAhead();
     }
 
     public int getStackPointer() {
@@ -1788,7 +1794,7 @@ public class CpuLoomcom implements InstructionTable {
      * Will wrap-around if already at the bottom of the stack (This
      * is the same behavior as the real 6502)
      */
-    void stackPush(int data) throws MemoryAccessException {
+    void stackPush(int data) {
         bus.setByte(0x100 + state.sp, data);
 
         if (state.sp == 0) {
@@ -1804,7 +1810,7 @@ public class CpuLoomcom implements InstructionTable {
      * Will wrap-around if already at the top of the stack (This
      * is the same behavior as the real 6502)
      */
-    int stackPop() throws MemoryAccessException {
+    int stackPop() {
         if (state.sp == 0xff) {
             state.sp = 0x00;
         } else {
@@ -1976,4 +1982,26 @@ public class CpuLoomcom implements InstructionTable {
 
         return disassembleOp(opCode, args);
     }
+
+	@Override
+	public boolean isBigEndian() {
+		return false;
+	}
+
+	@Override
+	public AbstractStatePanel getStatePanel() {
+		return state.getStatePanel();
+	}
+
+	@Override
+	public void go() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void stop() {
+		// TODO Auto-generated method stub
+		
+	}
 }

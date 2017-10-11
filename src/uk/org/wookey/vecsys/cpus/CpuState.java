@@ -6,5 +6,5 @@ public abstract class CpuState {
 	}
 	
 	public abstract void reset();
-	public abstract StatePanel getStatePanel();
+	public abstract AbstractStatePanel getStatePanel();
 }
