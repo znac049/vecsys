@@ -1,6 +1,7 @@
 package uk.org.wookey.vecsys.emulator;
 
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -13,9 +14,12 @@ import com.loomcom.symon.CpuLoomcom;
 
 import uk.org.wookey.vecsys.cpus.StatusPanel;
 import uk.org.wookey.vecsys.emulator.devices.ButtonDevice;
+import uk.org.wookey.vecsys.emulator.devices.CoinCounter;
+import uk.org.wookey.vecsys.emulator.devices.CoinDoor;
 import uk.org.wookey.vecsys.emulator.devices.DVG;
 import uk.org.wookey.vecsys.emulator.devices.EaromDevice;
 import uk.org.wookey.vecsys.emulator.devices.MemoryDevice;
+import uk.org.wookey.vecsys.emulator.devices.PlayerButtons;
 import uk.org.wookey.vecsys.emulator.devices.Pokey;
 import uk.org.wookey.vecsys.emulator.devices.SwitchDevice;
 import uk.org.wookey.vecsys.emulator.devices.ThreeKHz;
@@ -82,6 +86,16 @@ public class AsteroidsDeluxe extends Emulator {
 		ThreeKHz threeK = new ThreeKHz();
 		bus.attach(0x2001, threeK);
 		
+		PlayerButtons playerButtons = new PlayerButtons();
+		bus.attach(0x2403, 0x2404, playerButtons, 0);
+		bus.attach(0x3c00, 0x3c01, playerButtons, 1);
+		
+		CoinCounter coinCounters = new CoinCounter();
+		bus.attach(0x3c05, 0x3c07, coinCounters);
+		
+		CoinDoor coinDoor = new CoinDoor();
+		bus.attach(0x2400, 0x2401, coinDoor);
+		
 		cpu = new CpuLoomcom();
 		cpu.setBus(bus);
 		cpu.reset();
@@ -101,12 +115,20 @@ public class AsteroidsDeluxe extends Emulator {
 		
 		configPanel = new JPanel();
         final TitledBorder tb =
-                BorderFactory.createTitledBorder("CPU Status");
+                BorderFactory.createTitledBorder("Configuration");
 
 		configPanel.setBorder(tb);
 		configPanel.setMinimumSize(new Dimension(300, 100));
 		configPanel.setLayout(new GridBagLayout());
 
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.weightx = 0.0;
+		configPanel.add(playerButtons.getPlayer1Button(), gbc);
+		gbc.right();
+		
+		configPanel.add(playerButtons.getPlayer2Button(),  gbc);
+		gbc.right();
+		
 		configPanel.add(selfTest.getComponent(), gbc);
 		
 		controlPanel = new JPanel();
@@ -129,6 +151,14 @@ public class AsteroidsDeluxe extends Emulator {
 		
 		gbc.gridx = 2;
 		controlPanel.add(shieldButton.getComponent(), gbc);		
+		
+		gbc.nl();
+		gbc.right();
+		gbc.anchor = GridBagConstraints.CENTER;
+		gbc.weightx = 0.0;
+		gbc.gridwidth = 3;
+		
+		controlPanel.add(coinDoor.getPanel(), gbc);
 	}
 
 	@Override

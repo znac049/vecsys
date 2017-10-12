@@ -2,6 +2,7 @@ package uk.org.wookey.vecsys.emulator;
 
 import java.awt.Container;
 import java.awt.Event;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -166,8 +167,10 @@ public class MainWindow extends JFrame {
 		
 		gbc.nl();
 		gbc.gridwidth = 3;
+		gbc.anchor = GridBagConstraints.WEST;
 		cp.add(emulator.getConfigPanel(), gbc);
 		
+		gbc.anchor = GridBagConstraints.NORTH;
 		gbc.nl();
 		cp.add(emulator.getControlsPanel(), gbc);
 		

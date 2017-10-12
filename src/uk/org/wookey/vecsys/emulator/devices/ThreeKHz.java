@@ -8,9 +8,11 @@ public class ThreeKHz extends Device {
 	private static final Logger _log = new Logger("3KHz Clock");
 	
 	private static int clock = 0x80;
+	private int ticks;
 	
 	public ThreeKHz() {
 		super("3KHz");
+		ticks = 0;
 		
 		Thread runner = new Thread(new Runnable() {
 			@Override
@@ -21,13 +23,15 @@ public class ThreeKHz extends Device {
 					if ((System.nanoTime() - before) > 333000) {
 						clock = (clock == 0)?0x80:0;
 						before = System.nanoTime();
+						//tick();
 					}
 					
 					Thread.yield();
 				}
 			}
 		});
-
+		
+		runner.start();
 	}
 	
 	@Override
@@ -37,5 +41,13 @@ public class ThreeKHz extends Device {
 
 	@Override
 	public void setByte(int addr, int val, int id) throws IllegalAccessException {
+	}
+	
+	private void tick() {
+		ticks++;
+		if (ticks >= 3000) {
+			ticks = 0;
+			_log.logInfo("Heartbeat!");
+		}
 	}
 }
