@@ -1,9 +1,12 @@
 package uk.org.wookey.vecsys.emulator.devices;
 
-import uk.org.wookey.vecsys.emulator.CoinPanel;
 import uk.org.wookey.vecsys.emulator.Device;
+import uk.org.wookey.vecsys.utils.Logger;
+import uk.org.wookey.vecsys.widgets.CoinPanel;
 
 public class CoinDoor extends Device {
+	private static Logger _log = new Logger("AD-Game");
+
 	private CoinPanel panel;
 	
 	public CoinDoor() {
@@ -14,8 +17,8 @@ public class CoinDoor extends Device {
 	
 	@Override
 	public int getByte(int addr, int id) {
-		// TODO Auto-generated method stub
-		return 0;
+		_log.logInfo("Checking for coins");
+		return panel.isActive(addr)?0x80:0;
 	}
 
 	@Override

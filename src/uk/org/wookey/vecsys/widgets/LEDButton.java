@@ -1,4 +1,4 @@
-package uk.org.wookey.vecsys.emulator;
+package uk.org.wookey.vecsys.widgets;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -8,14 +8,21 @@ import java.awt.geom.Ellipse2D;
 
 import javax.swing.JButton;
 
-public class RoundButton extends JButton {
+import uk.org.wookey.vecsys.utils.Logger;
+
+public class LEDButton extends JButton {
+	private static final Logger _log = new Logger("LEDButton");
 	private Shape shape;
+	private boolean ledActive;
 
-	public RoundButton(String label) {
-		super(label);
+	public LEDButton(String label) {
+		super();
 
-	    Dimension size = getPreferredSize();
-	    size.width = size.height = Math.max(size.width, size.height);
+		ledActive = false;
+		
+	    Dimension size = new Dimension(30, 30);
+	    setMinimumSize(size);
+	    setMaximumSize(size);
 	    setPreferredSize(size);
 
 	    setContentAreaFilled(false);	
@@ -23,18 +30,29 @@ public class RoundButton extends JButton {
 
 	protected void paintComponent(Graphics g) {
 		if (getModel().isArmed()) {
-			g.setColor(Color.lightGray);
+			if (ledActive) {
+				g.setColor(Color.PINK);
+			}
+			else {
+				g.setColor(Color.lightGray);
+			}
 	    } else {
-	    	g.setColor(getBackground());
+	    	if (ledActive) {
+	    		g.setColor(Color.RED);
+	    	}
+	    	else {
+	    		g.setColor(getBackground());
+	    	}
 	    }
 		
-	    g.fillOval(0, 0, getSize().width-1, getSize().height-1);
+	    g.fillOval(5, 5, getSize().width-11, getSize().height-11);
 
 	    super.paintComponent(g);
 	}
 
 	protected void paintBorder(Graphics g) {
 		g.setColor(getForeground());
+	    g.drawOval(5, 5, getSize().width-11, getSize().height-11);
 	    g.drawOval(0, 0, getSize().width-1, getSize().height-1);
 	}
 
@@ -47,5 +65,13 @@ public class RoundButton extends JButton {
 	    }
 	    
 	    return shape.contains(x, y);
+	}
+	
+	public void setLED(boolean on) {
+		ledActive = on;
+		
+		_log.logInfo("LED " + (on?"ON":"OFF"));
+		
+		repaint();
 	}
 }

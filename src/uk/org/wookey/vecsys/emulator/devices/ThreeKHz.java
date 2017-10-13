@@ -36,11 +36,14 @@ public class ThreeKHz extends Device {
 	
 	@Override
 	public int getByte(int addr, int id) {
+		_log.logInfo("-> " + clock);
+		
 		return clock;
 	}
 
 	@Override
 	public void setByte(int addr, int val, int id) throws IllegalAccessException {
+		_log.logWarn("Write to read only 3KHz clock");
 	}
 	
 	private void tick() {

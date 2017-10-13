@@ -81,6 +81,10 @@ public class Bus {
 		attach(new MappedRange(singleAddr, singleAddr, dev));
 	}
 	
+	public void attach(int singleAddr, Device dev, int id) throws RangeException {
+		attach(new MappedRange(singleAddr, singleAddr, dev, id));
+	}
+	
 	public void attach(int start, int end, Device dev) throws RangeException {
 		attach(new MappedRange(start, end, dev, -1));
 	}
@@ -106,11 +110,11 @@ public class Bus {
 		}
 		
 		if (ind != -1) {
-			_log.logInfo(String.format("Inserting %04x-%04x at %d", range.getStartAddress(), range.getEndAddress(), ind));
+			//_log.logInfo(String.format("Inserting %04x-%04x at %d", range.getStartAddress(), range.getEndAddress(), ind));
 			ranges.add(ind, range);
 		}
 		else {
-			_log.logInfo(String.format("Inserting %04x-%04x at end", range.getStartAddress(), range.getEndAddress()));
+			//_log.logInfo(String.format("Inserting %04x-%04x at end", range.getStartAddress(), range.getEndAddress()));
 			ranges.add(range);
 		}
 	}

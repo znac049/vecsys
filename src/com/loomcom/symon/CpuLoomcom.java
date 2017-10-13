@@ -48,6 +48,9 @@ import uk.org.wookey.vecsys.utils.VecUtils;
 public class CpuLoomcom extends Cpu implements InstructionTable {
 
     private final static Logger _log = new Logger("CPU6502");
+    
+    public static final int NMI_INTERRUPT = 0;
+    public static final int IRQ_INTERRUPT = 1;
 
     /* Process status register mnemonics */
     public static final int P_CARRY       = 0x01;
@@ -1405,7 +1408,6 @@ public class CpuLoomcom extends Cpu implements InstructionTable {
      * @throws MemoryAccessException
      */
     private void handleInterrupt(int returnPc, int vectorLow, int vectorHigh, boolean isBreak) {
-
         if (isBreak)
         {
             // Set the break flag before pushing.
@@ -2128,5 +2130,18 @@ public class CpuLoomcom extends Cpu implements InstructionTable {
 	@Override
 	public StatusPanel getStatusPanel() {
 		return statusPanel;
+	}
+
+	@Override
+	public void interrupt(int interruptId) {
+		switch (interruptId) {
+		case NMI_INTERRUPT:
+			assertNmi();
+			break;
+			
+		case IRQ_INTERRUPT:
+			assertIrq();
+			break;
+		}
 	}
 }

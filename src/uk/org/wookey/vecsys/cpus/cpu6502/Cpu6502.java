@@ -462,4 +462,10 @@ public class Cpu6502 extends Cpu {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public void interrupt(int interruptId) {
+		// TODO Auto-generated method stub
+		
+	}
 }

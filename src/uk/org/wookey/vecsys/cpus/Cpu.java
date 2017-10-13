@@ -14,6 +14,7 @@ public abstract class Cpu {
 	public abstract void step();
 	public abstract void go();
 	public abstract void stop();
+	public abstract void interrupt(int interruptId);
 	public abstract StatusPanel getStatusPanel();
 
 	public void step(int numSteps) {

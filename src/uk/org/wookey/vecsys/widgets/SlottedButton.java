@@ -1,4 +1,4 @@
-package uk.org.wookey.vecsys.emulator;
+package uk.org.wookey.vecsys.widgets;
 
 import java.awt.Color;
 import java.awt.Dimension;

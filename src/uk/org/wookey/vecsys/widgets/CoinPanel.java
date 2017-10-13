@@ -1,4 +1,4 @@
-package uk.org.wookey.vecsys.emulator;
+package uk.org.wookey.vecsys.widgets;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -6,6 +6,8 @@ import java.awt.GridBagLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+
+import uk.org.wookey.vecsys.emulator.GBConstraints;
 
 public class CoinPanel extends JPanel {
 	private SlottedButton left;
@@ -32,5 +34,20 @@ public class CoinPanel extends JPanel {
 		
 		right = new SlottedButton("Right");
 		add(right, gbc);
+	}
+	
+	public boolean isActive(int slot) {
+		switch (slot) {
+			case 0:
+				return left.isSelected();
+				
+			case 1:
+				return centre.isSelected();
+				
+			case 2:
+				return right.isSelected();
+		}
+		
+		return false;
 	}
 }
