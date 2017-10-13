@@ -1,5 +1,7 @@
 package uk.org.wookey.vecsys.emulator.devices;
 
+import javax.swing.JPanel;
+
 import uk.org.wookey.vecsys.emulator.Device;
 import uk.org.wookey.vecsys.utils.Logger;
 import uk.org.wookey.vecsys.widgets.LEDButton;
@@ -16,9 +18,17 @@ public class PlayerButtons extends Device {
 	public PlayerButtons() {
 		super("Player Buttons/LEDs");
 
+		JPanel buttonPanel = new JPanel();
+		
 		p1 = new LEDButton("Player1");
+		buttonPanel.add(p1);
+		
 		p2 = new LEDButton("Player2");
+		buttonPanel.add(p2);
+		
+		components.add(buttonPanel);
 	}
+	
 	@Override
 	public int getByte(int addr, int id) {
 		if (id == buttons) {
@@ -48,13 +58,5 @@ public class PlayerButtons extends Device {
 		else {
 			_log.logWarn(String.format("Write to read-only player buttons +%d", addr));
 		}
-	}
-	
-	public LEDButton getPlayer1Button() {
-		return p1;
-	}
-
-	public LEDButton getPlayer2Button() {
-		return p2;
 	}
 }

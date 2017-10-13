@@ -106,10 +106,10 @@ public class AsteroidsDeluxe extends Emulator {
 		configPanel.setMinimumSize(new Dimension(300, 100));
 		configPanel.setLayout(new GridBagLayout());
 
-		configPanel.add(selfTest.getComponent(), gbc);
+		configPanel.add(selfTest.getWidget(), gbc);
 		gbc.right();
 		
-		configPanel.add(optionSwitches.getComponent(), gbc);		
+		configPanel.add(optionSwitches.getWidget(), gbc);		
 	}
 	
 	private void buildControlPanel() {
@@ -122,29 +122,29 @@ public class AsteroidsDeluxe extends Emulator {
 		controlPanel.setLayout(new GridBagLayout());
 
 		// Top row - player 1 and 2 buttons/leds
-		configPanel.add(playerButtons.getPlayer1Button(), gbc);
-		gbc.right();
-		
-		configPanel.add(playerButtons.getPlayer2Button(),  gbc);
+		gbc.gridwidth = 2;
+		gbc.anchor = GridBagConstraints.LINE_START;
+		controlPanel.add(playerButtons.getWidget(), gbc);
 		gbc.nl();
 		
 		// 2nd row - 4 game buttons
-		controlPanel.add(leftButton.getComponent(),  gbc);
+		gbc.gridwidth = 1;
+		controlPanel.add(leftButton.getWidget(),  gbc);
 		gbc.right();
 		
-		controlPanel.add(rightButton.getComponent(),  gbc);
+		controlPanel.add(rightButton.getWidget(),  gbc);
 		gbc.right();
 		gbc.right();
 		
-		controlPanel.add(fireButton.getComponent(), gbc);
+		controlPanel.add(fireButton.getWidget(), gbc);
 		gbc.right();
 		
-		controlPanel.add(thrustButton.getComponent(), gbc);
+		controlPanel.add(thrustButton.getWidget(), gbc);
 		gbc.nl();
 		
 		// 3rd row - shields button
 		gbc.gridx = 2;
-		controlPanel.add(shieldButton.getComponent(), gbc);		
+		controlPanel.add(shieldButton.getWidget(), gbc);		
 		gbc.nl();
 		
 		// Bottom row - coin door
@@ -153,7 +153,7 @@ public class AsteroidsDeluxe extends Emulator {
 		gbc.weightx = 0.0;
 		gbc.gridwidth = 3;
 		
-		controlPanel.add(coinDoor.getPanel(), gbc);		
+		controlPanel.add(coinDoor.getWidget(), gbc);		
 	}
 	
 	private void createDevices() throws IOException, RangeException {

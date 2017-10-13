@@ -51,7 +51,7 @@ public class Button extends Device {
 		_log.logWarn(String.format("Write to read-only device %s button",  name));
 	}
 	
-	public JComponent getComponent() {
+	public JComponent getWidget() {
 		return button;
 	}
 	

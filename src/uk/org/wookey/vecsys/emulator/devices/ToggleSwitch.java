@@ -18,6 +18,7 @@ public class ToggleSwitch extends Device {
 		super(devName + " switch");
 		
 		button = new JToggleButton(devName);
+		components.add(button);
 		
 		this.onVal = onVal;
 		this.offVal = offVal;
@@ -37,9 +38,5 @@ public class ToggleSwitch extends Device {
 	@Override
 	public void setByte(int addr, int val, int id) throws IllegalAccessException {
 		_log.logWarn(String.format("Write to read-only device %s switch",  name));
-	}
-	
-	public JComponent getComponent() {
-		return button;
 	}
 }

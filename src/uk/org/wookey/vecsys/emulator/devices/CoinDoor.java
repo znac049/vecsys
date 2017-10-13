@@ -13,6 +13,7 @@ public class CoinDoor extends Device {
 		super("Coindoor");
 	
 		panel = new CoinPanel();
+		components.add(panel);
 	}
 	
 	@Override
@@ -24,9 +25,5 @@ public class CoinDoor extends Device {
 	@Override
 	public void setByte(int addr, int val, int id) throws IllegalAccessException {
 		// TODO Auto-generated method stub		
-	}
-
-	public CoinPanel getPanel() {
-		return panel;
 	}
 }

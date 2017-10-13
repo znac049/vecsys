@@ -3,21 +3,23 @@ package uk.org.wookey.vecsys.widgets;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-
 import javax.swing.JToggleButton;
 
 import uk.org.wookey.vecsys.utils.Logger;
 
 public class SingleDIPSwitch extends JToggleButton {
+	private static final long serialVersionUID = 1L;
+
+	@SuppressWarnings("unused")
 	private static Logger _log = new Logger("SingleDIPSwitch");
 	
-	public static final int DEFAULT_WIDTH = 16;
-	public static final int DEFAULT_HEIGHT = 40;
+	public static final int dipWidth = 18;
+	public static final int dipHeight = 40;
 	
 	public SingleDIPSwitch() {
 		super();
 		
-		setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+		setPreferredSize(new Dimension(dipWidth, dipHeight));
 		setForeground(Color.black);
 		setBackground(Color.lightGray);
 	}
@@ -30,16 +32,17 @@ public class SingleDIPSwitch extends JToggleButton {
 		int slotHeight = slotY*8;
 
 		g.setColor(getBackground());
-		g.fillRect(0, 0, size.width-1, size.height-1);
-		
+		g.fillRect(0, 0, dipWidth-1, dipHeight-1);
+
 		g.setColor(getForeground());
 		//g.setColor(Color.blue);
 		if (this.isSelected()) {
 			g.fillRect(slotX,  slotY,  slotWidth, slotHeight/2);
-	    } else {
-	    	g.fillRect(slotX,  slotY*4,  slotWidth,  slotHeight/2);
-	    }
 
+	    } else {
+			g.fillRect(slotX,  slotY*4,  slotWidth,  slotHeight/2);
+	    }
+		
 		g.setColor(Color.black);
 		g.drawRect(slotX,  slotY,  slotWidth,  slotHeight);
 	}

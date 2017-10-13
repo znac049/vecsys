@@ -26,11 +26,11 @@ public abstract class Device {
 		return true;
 	}
 	
-	public JComponent getComponent() {
-		return getComponent(0);
+	public JComponent getWidget() {
+		return getWidget(0);
 	}
 	
-	public JComponent getComponent(int componentNumber) {
+	public JComponent getWidget(int componentNumber) {
 		if (componentNumber < components.size()) {
 			return components.get(componentNumber);
 		}
