@@ -16,12 +16,14 @@ import uk.org.wookey.vecsys.cpus.StatusPanel;
 import uk.org.wookey.vecsys.emulator.devices.Button;
 import uk.org.wookey.vecsys.emulator.devices.CoinCounter;
 import uk.org.wookey.vecsys.emulator.devices.CoinDoor;
+import uk.org.wookey.vecsys.emulator.devices.ControllerSelect;
 import uk.org.wookey.vecsys.emulator.devices.DVG;
 import uk.org.wookey.vecsys.emulator.devices.Earom;
 import uk.org.wookey.vecsys.emulator.devices.MemoryDevice;
 import uk.org.wookey.vecsys.emulator.devices.OptionSwitches;
 import uk.org.wookey.vecsys.emulator.devices.PlayerButtons;
 import uk.org.wookey.vecsys.emulator.devices.Pokey;
+import uk.org.wookey.vecsys.emulator.devices.SoundControl;
 import uk.org.wookey.vecsys.emulator.devices.ToggleSwitch;
 import uk.org.wookey.vecsys.emulator.devices.ThreeKHz;
 import uk.org.wookey.vecsys.emulator.devices.WatchDog;
@@ -50,6 +52,8 @@ public class AsteroidsDeluxe extends Emulator {
 	private CoinCounter coinCounters;
 	private CoinDoor coinDoor;
 	private OptionSwitches optionSwitches;
+	private SoundControl soundControl;
+	private ControllerSelect controllerSelect;
 
 	public AsteroidsDeluxe() throws RangeException, IOException {
 		bus = new Bus(16);
@@ -233,6 +237,15 @@ public class AsteroidsDeluxe extends Emulator {
 		
 		optionSwitches = new OptionSwitches();
 		bus.attach(0x2800, 0x2803, optionSwitches);	
+		
+		
+		soundControl = new SoundControl();
+		bus.attach(0x3600, soundControl, SoundControl.explosion);
+		bus.attach(0x3c03, soundControl, SoundControl.thrust);
+		
+		
+		controllerSelect = new ControllerSelect();
+		bus.attach(0x3c04, controllerSelect);
 	}
 
 	@Override

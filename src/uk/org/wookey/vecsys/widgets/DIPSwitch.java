@@ -16,24 +16,42 @@ public class DIPSwitch extends JPanel implements MouseListener {
 	
 	private ArrayList<SingleDIPSwitch> switches;
 	private int val;
+	private boolean leftToRight;
 	
 	private static final Color[] colours = {Color.black, new Color(0xa5, 0x2a, 0x2a), Color.red, Color.orange, Color.yellow,
 			Color.green, Color.blue, new Color(0xee, 0x82, 0xee), new Color(0x80, 0x80, 0x80), Color.white};
 	
+	
 	public DIPSwitch(int numSwitches) {
+		this(numSwitches, true);
+	}
+	
+	public DIPSwitch(int numSwitches, boolean lToR) {
 		super();
+		
+		leftToRight = lToR;
 		
 		switches = new ArrayList<SingleDIPSwitch>();
 		for (int i=0; i<numSwitches; i++) {
 			SingleDIPSwitch sw = new SingleDIPSwitch();
 			
-			sw.setForeground(colours[(numSwitches-i)%10]);
+			if (leftToRight) {
+				sw.setForeground(colours[(i+1)%10]);
+			}
+			else {
+				sw.setForeground(colours[(numSwitches-i)%10]);
+			}
+			
 			add(sw);
 			switches.add(sw);
 			sw.addMouseListener(this);
 		}
 		
 		val = 0;
+	}
+	
+	public int getValue() {
+		return val;
 	}
 
 	@Override
@@ -42,11 +60,23 @@ public class DIPSwitch extends JPanel implements MouseListener {
 		
 		int maxIndex = switches.size()-1;
 		
-		for (int i=0; i<=maxIndex; i++) {
-			if (switches.get(maxIndex-i).isSelected()) {
-				val = val | (1<<i);
+		if (leftToRight) {
+			for (int i=0; i<=maxIndex; i++) {
+				val = val << 1;
+				
+				if (switches.get(maxIndex-i).isSelected()) {
+					val = val | 1;
+				}
 			}
 		}
+		else {
+			for (int i=0; i<=maxIndex; i++) {
+				if (switches.get(maxIndex-i).isSelected()) {
+					val = val | (1<<i);
+				}
+			}
+		}
+		
 		//_log.logInfo(String.format("DIP Switches changed to %02x", val));		
 	}
 
