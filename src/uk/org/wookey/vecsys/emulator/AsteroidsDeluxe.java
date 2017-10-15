@@ -5,6 +5,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.util.prefs.Preferences;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -23,6 +24,7 @@ import uk.org.wookey.vecsys.emulator.devices.MemoryDevice;
 import uk.org.wookey.vecsys.emulator.devices.OptionSwitches;
 import uk.org.wookey.vecsys.emulator.devices.PlayerButtons;
 import uk.org.wookey.vecsys.emulator.devices.Pokey;
+import uk.org.wookey.vecsys.emulator.devices.SlamButton;
 import uk.org.wookey.vecsys.emulator.devices.SoundControl;
 import uk.org.wookey.vecsys.emulator.devices.ToggleSwitch;
 import uk.org.wookey.vecsys.emulator.devices.ThreeKHz;
@@ -54,6 +56,7 @@ public class AsteroidsDeluxe extends Emulator {
 	private OptionSwitches optionSwitches;
 	private SoundControl soundControl;
 	private ControllerSelect controllerSelect;
+	private SlamButton slamSwitch;
 
 	public AsteroidsDeluxe() throws RangeException, IOException {
 		bus = new Bus(16);
@@ -114,6 +117,18 @@ public class AsteroidsDeluxe extends Emulator {
 		gbc.right();
 		
 		configPanel.add(optionSwitches.getWidget(), gbc);		
+		gbc.right();
+		
+		configPanel.add(slamSwitch.getWidget());
+		gbc.nl();
+		
+		configPanel.add(coinCounters.getWidget(0), gbc);
+		gbc.right();
+		
+		configPanel.add(coinCounters.getWidget(1), gbc);
+		gbc.right();
+		
+		configPanel.add(coinCounters.getWidget(2), gbc);
 	}
 	
 	private void buildControlPanel() {
@@ -180,27 +195,27 @@ public class AsteroidsDeluxe extends Emulator {
 		bus.attach(0x4000, 0x57ff, dvg, DVG.vgMem);
 		
 		
-		leftButton = new Button("Q", 0x80, 0, KeyEvent.VK_Q); 
+		leftButton = new Button("Q", 0, 0x80, KeyEvent.VK_Q); 
 		bus.attach(0x2407, leftButton);
 		
 		
-		rightButton = new Button("D", 0x80, 0, KeyEvent.VK_D); 
+		rightButton = new Button("D", 0, 0x80, KeyEvent.VK_D); 
 		bus.attach(0x2406, rightButton);
 		
 		
-		shieldButton = new Button("SP", 0x80, 0, KeyEvent.VK_SPACE); 
+		shieldButton = new Button("SP", 0, 0x80, KeyEvent.VK_SPACE); 
 		bus.attach(0x2003, shieldButton);
 		
 		
-		fireButton = new Button("K", 0x80, 0, KeyEvent.VK_K);
+		fireButton = new Button("K", 0, 0x80, KeyEvent.VK_K);
 		bus.attach(0x2004, fireButton);
 		
 		
-		thrustButton = new Button("P", 0x80, 0, KeyEvent.VK_P);
+		thrustButton = new Button("P", 0, 0x80, KeyEvent.VK_P);
 		bus.attach(0x2405, thrustButton);
 		
 		
-		selfTest = new ToggleSwitch("SelfTest", 0x80, 0);
+		selfTest = new ToggleSwitch("SelfTest", 0, 0x80);
 		bus.attach(0x2007, selfTest);
 		
 		
@@ -227,7 +242,7 @@ public class AsteroidsDeluxe extends Emulator {
 		bus.attach(0x3c00, 0x3c01, playerButtons, PlayerButtons.leds);
 		
 		
-		coinCounters = new CoinCounter();
+		coinCounters = new CoinCounter("AD");
 		bus.attach(0x3c05, 0x3c07, coinCounters);
 		
 		
@@ -246,6 +261,10 @@ public class AsteroidsDeluxe extends Emulator {
 		
 		controllerSelect = new ControllerSelect();
 		bus.attach(0x3c04, controllerSelect);
+		
+		
+		slamSwitch = new SlamButton();
+		bus.attach(0x2006, slamSwitch);
 	}
 
 	@Override

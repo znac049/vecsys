@@ -22,8 +22,8 @@ public abstract class Device {
 		return name;
 	}
 	
-	public boolean hasGUIComponents() {
-		return true;
+	public boolean hasWidgets() {
+		return (components.size() > 0);
 	}
 	
 	public JComponent getWidget() {

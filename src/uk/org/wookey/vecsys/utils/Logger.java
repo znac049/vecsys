@@ -32,6 +32,15 @@ public class Logger {
 		initialise(tag);
 	}
 	
+	public Logger() {
+		initialise(getCallerClassName(this.getClass()));
+	}
+	
+	public Logger(int level) {
+		initialise(getCallerClassName(this.getClass()));
+		_logLevel = level;
+	}
+	
 	public Logger(String tag, int level) {
 		initialise(tag);
 		_logLevel = level;
@@ -155,4 +164,19 @@ public class Logger {
 	public synchronized void logError(String msg, Exception e) {
 		printBacktrace(msg, e, _errAttribs);
 	}
+	
+    public static String getCallerClassName(final Class<?> clazz) {
+        final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        final String className = clazz.getName();
+        boolean classFound = false;
+        for (int i = 1; i < stackTrace.length; i++) {
+            final StackTraceElement element = stackTrace[i];
+            final String callerClassName = element.getClassName();
+            // check if class name is the requested class
+            if (callerClassName.equals(className)) classFound = true;
+            else if (classFound) return callerClassName;
+        }
+        
+        return "NoClass";
+    }
 }
