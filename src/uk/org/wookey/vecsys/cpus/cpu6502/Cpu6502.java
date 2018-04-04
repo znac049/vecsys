@@ -520,13 +520,13 @@ public class Cpu6502 extends Cpu {
 		}
 		
 		private String getCodeString() {
-			String src = String.format("%04X: %02X", state.pc, state.nextInstruction.toString());
+			String src = String.format("%04X: %02x", state.pc, state.nextIr);
 			
 			for (int i=1; i<2; i++) {
 				src += (i<state.nextInstruction.size)?String.format(" %02X", state.nextArgs[i-1]):"   ";
 			}
 			
-			return src + state.nextInstruction.toString();
+			return src + " " + state.nextInstruction.toString();
 		
 		}
     }

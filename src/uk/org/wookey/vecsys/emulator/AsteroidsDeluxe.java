@@ -16,6 +16,7 @@ import com.loomcom.symon.CpuLoomcom;
 import uk.org.wookey.vecsys.cpus.StatusPanel;
 import uk.org.wookey.vecsys.cpus.cpu6502.Cpu6502;
 import uk.org.wookey.vecsys.cpus.cpu6x09.Cpu6x09;
+import uk.org.wookey.vecsys.cpus.simplecpu.SimpleCpu;
 import uk.org.wookey.vecsys.emulator.devices.Button;
 import uk.org.wookey.vecsys.emulator.devices.CoinCounter;
 import uk.org.wookey.vecsys.emulator.devices.CoinDoor;
@@ -69,7 +70,8 @@ public class AsteroidsDeluxe extends Emulator {
 		
 		createDevices();
 		
-		cpu = new Cpu6x09();
+		//cpu = new SimpleCpu();
+		cpu = new Cpu6502();
 		cpu.setBus(bus);
 		cpu.reset();
 		

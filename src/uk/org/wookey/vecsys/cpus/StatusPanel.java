@@ -6,20 +6,29 @@ import java.awt.GridBagLayout;
 import javax.swing.JPanel;
 
 public abstract class StatusPanel extends JPanel {
+	protected boolean enabled;
+	
 	public StatusPanel() {
 		super();
 		
 		setLayout(new GridBagLayout());
 		setBackground(Color.LIGHT_GRAY);
+		enabled = true;
 	}
 	
 	public abstract void update();
 
+	public boolean isEnabled() {
+		return enabled;
+	}
+	
 	public void turnOff() {
-		setEnabled(false);
+		enabled = false;
+		setEnabled(enabled);
 	}
 
 	public void turnOn() {
-		setEnabled(true);
+		enabled = true;
+		setEnabled(enabled);
 	}
 }

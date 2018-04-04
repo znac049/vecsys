@@ -20,5 +20,6 @@ public abstract class Emulator {
 	
 	public void step() {
 		cpu.step();
+		cpu.getStatusPanel().update();
 	}
 }
