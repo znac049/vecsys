@@ -6,9 +6,10 @@ import java.awt.GridBagConstraints;
 import javax.swing.JPanel;
 
 import uk.org.wookey.vecsys.emulator.TTLabel;
+import uk.org.wookey.vecsys.cpus.StatusPanel;
 import uk.org.wookey.vecsys.emulator.GBConstraints;
 
-public class StatePanel6x09 extends JPanel {
+public class StatePanel6x09 extends StatusPanel {
 	private static final long serialVersionUID = 1L;
 	
 	private TTLabel pcReg;
@@ -102,5 +103,11 @@ public class StatePanel6x09 extends JPanel {
 		
 		ccStr = new TTLabel("--------");
 		add(ccStr, gbc);
+	}
+
+	@Override
+	public void update() {
+		// TODO Auto-generated method stub
+		
 	}
 }

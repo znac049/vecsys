@@ -1,13 +1,17 @@
 package uk.org.wookey.vecsys.emulator.devices;
 
+import java.util.prefs.Preferences;
+
 import uk.org.wookey.vecsys.emulator.Device;
 import uk.org.wookey.vecsys.widgets.DIPSwitch;
 
 public class OptionSwitches extends Device {	
-	public OptionSwitches() {
+	public OptionSwitches(String gameName) {
 		super("Options DIPs");
 		
-		components.add(new DIPSwitch(8));
+		Preferences prefs = Preferences.userRoot().node(gameName);
+		
+		components.add(new DIPSwitch(8, prefs, "options1"));
 	}
 	
 	@Override

@@ -8,8 +8,11 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
 import uk.org.wookey.vecsys.emulator.GBConstraints;
+import uk.org.wookey.vecsys.utils.Logger;
 
 public class CoinPanel extends JPanel {
+	private static final Logger _log = new Logger();
+	
 	private SlottedButton left;
 	private SlottedButton centre;
 	private SlottedButton right;
@@ -20,7 +23,7 @@ public class CoinPanel extends JPanel {
 		setLayout(new GridBagLayout());
 		
 		GBConstraints gbc = new GBConstraints();
-		gbc.weightx = 0.5;
+		gbc.weightx = 0.0;
 		
 		setBorder(BorderFactory.createLineBorder(Color.black));
 		
@@ -37,17 +40,24 @@ public class CoinPanel extends JPanel {
 	}
 	
 	public boolean isActive(int slot) {
+		boolean res = false;
+		
 		switch (slot) {
 			case 0:
-				return left.isSelected();
+				res = left.isSelected();
+				break;
 				
 			case 1:
-				return centre.isSelected();
+				res = centre.isSelected();
+				break;
 				
 			case 2:
-				return right.isSelected();
+				res = right.isSelected();
+				break;
 		}
 		
-		return false;
+		_log.logInfo(String.format("CoinPanel.isActive(%d, args) -> %b", slot, res));
+		
+		return res;
 	}
 }

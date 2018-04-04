@@ -8,9 +8,11 @@ public class Cpu6x09 extends Cpu {
 	private static Logger _log = new Logger("6x09");
 
 	private CpuState6x09 state;
+	private StatePanel6x09 statePanel;
 	
 	public Cpu6x09() {
 		state = new CpuState6x09();
+		statePanel = new StatePanel6x09();
 	}
 
 	@Override
@@ -44,8 +46,7 @@ public class Cpu6x09 extends Cpu {
 
 	@Override
 	public StatusPanel getStatusPanel() {
-		// TODO Auto-generated method stub
-		return null;
+		return statePanel;
 	}
 
 	@Override

@@ -1,8 +1,20 @@
 package uk.org.wookey.vecsys.cpus.cpu6502;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
 import uk.org.wookey.vecsys.cpus.Cpu;
 import uk.org.wookey.vecsys.cpus.StatusPanel;
+import uk.org.wookey.vecsys.emulator.GBConstraints;
+import uk.org.wookey.vecsys.emulator.TTLabel;
 import uk.org.wookey.vecsys.utils.Logger;
+import uk.org.wookey.vecsys.utils.VecUtils;
 
 public class Cpu6502 extends Cpu {
 	private static Logger _log = new Logger("6502");
@@ -396,9 +408,134 @@ public class Cpu6502 extends Cpu {
 			new Instruction(0xfe, "INC",  3, Mode.ABX, 7),
 			new Instruction(0xff, "BBS7", 3, Mode.ZPR, 7)
 	};
-	
+
+    private class Cpu6502StatusPanel extends StatusPanel {
+    	private TTLabel pcReg;
+    	private TTLabel aReg;
+    	private TTLabel xReg;
+    	private TTLabel yReg;
+    	private TTLabel sReg;
+    	private TTLabel spReg;
+    	private TTLabel flagStr;
+    	
+    	private TTLabel codeStr;
+    	
+    	public Cpu6502StatusPanel() {
+    		super();
+    		setLayout(new GridBagLayout());
+    		
+    		Color headingColour = Color.YELLOW;
+    		
+    		JPanel registers = new JPanel();
+    		registers.setLayout(new GridBagLayout());
+    		registers.setBackground(Color.DARK_GRAY);
+    		
+    		GBConstraints gbc = new GBConstraints();
+    		gbc.anchor = GridBagConstraints.CENTER;
+    		gbc.fill = GridBagConstraints.NONE;
+    		
+    		registers.add(new TTLabel("PC", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("A", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("X", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("Y", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("SR", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("SP", headingColour), gbc);
+    		gbc.right();
+    		
+    		registers.add(new TTLabel("NV-BDIZC", headingColour), gbc);
+    		
+    		gbc.nl();
+    		
+    		pcReg = new TTLabel("----");
+    		registers.add(pcReg, gbc);
+    		gbc.right();
+    		
+    		aReg = new TTLabel("--");
+    		registers.add(aReg, gbc);
+    		gbc.right();
+    		
+    		xReg = new TTLabel("--");
+    		registers.add(xReg, gbc);
+    		gbc.right();
+    		
+    		yReg = new TTLabel("--");
+    		registers.add(yReg, gbc);
+    		gbc.right();
+    		
+    		sReg = new TTLabel("--");
+    		registers.add(sReg, gbc);
+    		gbc.right();
+    		
+    		spReg = new TTLabel("---");
+    		registers.add(spReg, gbc);
+    		gbc.right();
+    		
+    		flagStr = new TTLabel("--------");
+    		registers.add(flagStr, gbc);
+    		gbc.nl();
+    		
+    		gbc.reset();
+    		add(registers, gbc);
+    		gbc.nl();
+    		
+    		JLabel spacer = new JLabel("X");
+    		spacer.setMinimumSize(new Dimension(spacer.getMinimumSize().width, 50));
+    		add(spacer, gbc);
+    		gbc.nl();
+    		
+    		JPanel codePanel = new JPanel();
+    		codePanel.setLayout(new BorderLayout());
+    		
+    		codePanel.setBackground(Color.DARK_GRAY);
+    		
+    		codeStr = new TTLabel("????");
+    		codePanel.add(codeStr, BorderLayout.WEST);
+    		
+    		add(codePanel, gbc);
+    	}
+    	
+		@Override
+		public void update() {
+			if (isEnabled()) {
+				pcReg.setText(String.format("%04X", state.pc));
+				aReg.setText(String.format("%02X", state.a));
+				xReg.setText(String.format("%02X", state.x));
+				yReg.setText(String.format("%02X", state.y));
+				sReg.setText(String.format("%02X", state.getStatusFlag()));
+				spReg.setText(String.format("1%02X", state.sp));
+				flagStr.setText(VecUtils.binaryString(state.getStatusFlag(), 8));
+			
+				codeStr.setText(getCodeString());
+			}
+		}
+		
+		private String getCodeString() {
+			String src = String.format("%04X: %02X", state.pc, state.nextInstruction.toString());
+			
+			for (int i=1; i<2; i++) {
+				src += (i<state.nextInstruction.size)?String.format(" %02X", state.nextArgs[i-1]):"   ";
+			}
+			
+			return src + state.nextInstruction.toString();
+		
+		}
+    }
+    
+    Cpu6502StatusPanel statusPanel;
+
 	public Cpu6502() {
 		state = new CpuState6502();
+		statusPanel = new Cpu6502StatusPanel();
 	}
 	
 	@Override
@@ -460,7 +597,7 @@ public class Cpu6502 extends Cpu {
 	@Override
 	public StatusPanel getStatusPanel() {
 		// TODO Auto-generated method stub
-		return null;
+		return statusPanel;
 	}
 
 	@Override

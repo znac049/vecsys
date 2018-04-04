@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.prefs.Preferences;
 
 import javax.swing.JPanel;
 import uk.org.wookey.vecsys.utils.Logger;
@@ -17,19 +18,23 @@ public class DIPSwitch extends JPanel implements MouseListener {
 	private ArrayList<SingleDIPSwitch> switches;
 	private int val;
 	private boolean leftToRight;
+	private Preferences prefs;
+	private String key;
 	
 	private static final Color[] colours = {Color.black, new Color(0xa5, 0x2a, 0x2a), Color.red, Color.orange, Color.yellow,
 			Color.green, Color.blue, new Color(0xee, 0x82, 0xee), new Color(0x80, 0x80, 0x80), Color.white};
 	
 	
-	public DIPSwitch(int numSwitches) {
-		this(numSwitches, true);
+	public DIPSwitch(int numSwitches, Preferences prefs, String key) {
+		this(numSwitches, prefs, key, true);
 	}
 	
-	public DIPSwitch(int numSwitches, boolean lToR) {
+	public DIPSwitch(int numSwitches, Preferences prefs, String key, boolean lToR) {
 		super();
 		
 		leftToRight = lToR;
+		this.prefs = prefs;
+		this.key = key;
 		
 		switches = new ArrayList<SingleDIPSwitch>();
 		for (int i=0; i<numSwitches; i++) {
@@ -47,7 +52,7 @@ public class DIPSwitch extends JPanel implements MouseListener {
 			sw.addMouseListener(this);
 		}
 		
-		val = 0;
+		val = prefs.getInt(key,  0xff);
 	}
 	
 	public int getValue() {
@@ -77,7 +82,8 @@ public class DIPSwitch extends JPanel implements MouseListener {
 			}
 		}
 		
-		//_log.logInfo(String.format("DIP Switches changed to %02x", val));		
+		//_log.logInfo(String.format("DIP Switches changed to %02x", val));
+		prefs.putInt(key, val);
 	}
 
 	@Override

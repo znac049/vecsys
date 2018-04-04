@@ -3,7 +3,11 @@ package uk.org.wookey.vecsys.widgets;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.MouseEvent;
+
 import javax.swing.JButton;
+
+import uk.org.wookey.vecsys.emulator.NullMouseListener;
 
 public class SlottedButton extends JButton {
 	private static final long serialVersionUID = 1L;
@@ -15,6 +19,9 @@ public class SlottedButton extends JButton {
 	private static final int SLOT_WIDTH = 8;
 	private static final int SLOT_OFFSET = (WIDTH - SLOT_WIDTH) / 2;
 	
+	private long mouseClickTime;
+	private boolean clickActive;
+	
 	//private Shape shape;
 
 	public SlottedButton(String label) {
@@ -22,17 +29,37 @@ public class SlottedButton extends JButton {
 
 	    Dimension size = new Dimension(WIDTH, HEIGHT);
 	    
+	    clickActive = false;
+	    mouseClickTime = 0;
+	    
 	    setBackground(darkRed);
 
 	    setMinimumSize(size);
 	    setMaximumSize(size);
 	    setPreferredSize(size);
 
-	    setContentAreaFilled(false);	
+	    setContentAreaFilled(false);
+	    
+	    addMouseListener(new NullMouseListener() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				mouseClickTime = System.currentTimeMillis() + 500;
+				clickActive = true;
+			}
+	    });
+	}
+	
+	public boolean isActive() {
+		if (clickActive && mouseClickTime < System.currentTimeMillis()) {
+			clickActive = false;
+			repaint();
+		}
+		return false;
 	}
 
 	protected void paintComponent(Graphics g) {
-		if (getModel().isArmed()) {
+		//if (getModel().isArmed()) {
+		if (clickActive) {
 			g.setColor(Color.lightGray);
 	    } else {
 	    	g.setColor(getBackground());
@@ -49,15 +76,4 @@ public class SlottedButton extends JButton {
 		g.setColor(getForeground());
 		g.drawRect(0,  0, WIDTH-1, HEIGHT-1);
 	}
-
-	// Hit detection.
-	//public boolean contains(int x, int y) {
-	//	// If the button has changed size, 
-	//	// make a new shape object.
-	//    if (shape == null || !shape.getBounds().equals(getBounds())) {
-	//    	shape = new Ellipse2D.Float(0, 0, getWidth(), getHeight());
-	//    }
-	//    
-	//    return shape.contains(x, y);
-	//}
 }
