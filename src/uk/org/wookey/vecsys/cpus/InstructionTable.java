@@ -11,4 +11,12 @@ public class InstructionTable {
 			instructions[i] = null;
 		}
 	}
+	
+	public void add(MinimalInstruction instruction) throws Exception {
+		if (instructions[instruction.opcode] != null) {
+			throw new Exception(String.format("Duplicate opcode %02x for %s instruction", instruction.opcode, instruction.name));
+		}
+		
+		instructions[instruction.opcode] = instruction; 
+	}
 }

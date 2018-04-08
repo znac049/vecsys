@@ -1,7 +1,7 @@
 package uk.org.wookey.vecsys.cpus;
 
 public class MinimalInstruction {
-	public static int opcode;
+	public int opcode;
 	public String name;
 	public int cycles;
 	public int size;
