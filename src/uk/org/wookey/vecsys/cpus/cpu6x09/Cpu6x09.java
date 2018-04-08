@@ -1,6 +1,7 @@
 package uk.org.wookey.vecsys.cpus.cpu6x09;
 
 import uk.org.wookey.vecsys.cpus.Cpu;
+import uk.org.wookey.vecsys.cpus.InstructionTable;
 import uk.org.wookey.vecsys.cpus.StatusPanel;
 import uk.org.wookey.vecsys.utils.Logger;
 
@@ -10,9 +11,23 @@ public class Cpu6x09 extends Cpu {
 	private CpuState6x09 state;
 	private StatePanel6x09 statePanel;
 	
+	InstructionTable noPrefix;
+	InstructionTable prefix10;
+	InstructionTable prefix11;
+	
 	public Cpu6x09() {
+		noPrefix = new InstructionTable();
+		prefix10 = new InstructionTable();
+		prefix11 = new InstructionTable();
+		
+		buildInstructionTables();
+		
 		state = new CpuState6x09();
 		statePanel = new StatePanel6x09();
+	}
+	
+	private void buildInstructionTables() {
+		
 	}
 
 	@Override

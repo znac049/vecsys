@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 
 import uk.org.wookey.vecsys.cpus.Cpu;
 import uk.org.wookey.vecsys.cpus.StatusPanel;
+import uk.org.wookey.vecsys.cpus.cpu6502.Instruction.Mode;
 import uk.org.wookey.vecsys.emulator.GBConstraints;
 import uk.org.wookey.vecsys.emulator.TTLabel;
 import uk.org.wookey.vecsys.utils.Logger;
@@ -31,108 +32,6 @@ public class Cpu6502 extends Cpu {
 
     public static final int RESET_VEC = 0xfffc;
 	private CpuState6502 state;
-	
-    public enum Mode {
-        ACC {
-            public String toString() {
-                return "Accumulator";
-            }
-        },
-        AIX {
-            public String toString() {
-                return "Absolute, X-Indexed Indirect";
-            }
-        },
-        ABS {
-            public String toString() {
-                return "Absolute";
-            }
-        },
-
-        ABX {
-            public String toString() {
-                return "Absolute, X-indexed";
-            }
-        },
-
-        ABY {
-            public String toString() {
-                return "Absolute, Y-indexed";
-            }
-        },
-
-        IMM {
-            public String toString() {
-                return "Immediate";
-            }
-        },
-
-        IMP {
-            public String toString() {
-                return "Implied";
-            }
-        },
-
-        IND {
-            public String toString() {
-                return "Indirect";
-            }
-        },
-
-        XIN {
-            public String toString() {
-                return "X-indexed Indirect";
-            }
-        },
-
-        INY {
-            public String toString() {
-                return "Indirect, Y-indexed";
-            }
-        },
-
-        REL {
-            public String toString() {
-                return "Relative";
-            }
-        },
-
-        ZPG {
-            public String toString() {
-                return "Zero Page";
-            }
-        },
-
-        ZPR {
-            public String toString() {
-                return "Zero Page, Relative";
-            }
-        },
-
-        ZPX {
-            public String toString() {
-                return "Zero Page, X-indexed";
-            }
-        },
-
-        ZPY {
-            public String toString() {
-                return "Zero Page, Y-indexed";
-            }
-        },
-
-        ZPI {
-            public String toString() {
-                return "Zero Page Indirect";
-            }
-        },
-
-        NUL {
-            public String toString() {
-                return "NULL";
-            }
-        }
-    }
 	
 	private static final Instruction[] instructions = {
 			// 00-0f
