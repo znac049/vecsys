@@ -19,4 +19,8 @@ public class InstructionTable {
 		
 		instructions[instruction.opcode] = instruction; 
 	}
+
+	public MinimalInstruction get(int ir) {
+		return instructions[ir];
+	}
 }

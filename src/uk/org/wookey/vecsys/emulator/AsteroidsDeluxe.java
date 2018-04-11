@@ -13,7 +13,7 @@ import javax.swing.border.TitledBorder;
 
 import com.loomcom.symon.CpuLoomcom;
 
-import uk.org.wookey.vecsys.cpus.StatusPanel;
+import uk.org.wookey.vecsys.cpus.BaseStatusPanel;
 import uk.org.wookey.vecsys.cpus.cpu6502.Cpu6502;
 import uk.org.wookey.vecsys.cpus.cpu6x09.Cpu6x09;
 import uk.org.wookey.vecsys.cpus.simplecpu.SimpleCpu;
@@ -71,9 +71,8 @@ public class AsteroidsDeluxe extends Emulator {
 		createDevices();
 		
 		//cpu = new SimpleCpu();
-		cpu = new Cpu6502();
+		cpu = new Cpu6x09();
 		cpu.setBus(bus);
-		cpu.reset();
 		
 		if (cpu.isBigEndian()) {
 			bus.setBigEndian();
@@ -81,6 +80,8 @@ public class AsteroidsDeluxe extends Emulator {
 		else {
 			bus.setLittleEndian();
 		}
+
+		cpu.reset();
 
 		bus.dump();
 		
@@ -181,7 +182,8 @@ public class AsteroidsDeluxe extends Emulator {
 	
 	private void createDevices() throws IOException, RangeException {
 		gameRom = new MemoryDevice(8192);
-		gameRom.loadFile("Code/ad-v3.bin", 0);
+		//gameRom.loadFile("Code/ad-v3.bin", 0);
+		gameRom.loadFile("Code/test-noram.bin", 0);
 		gameRom.setWriteable(false);
 		gameRom.setName("Game ROM");
 		bus.attach(0x6000, 0x7fff, gameRom);
@@ -282,7 +284,7 @@ public class AsteroidsDeluxe extends Emulator {
 	}
 
 	@Override
-	public StatusPanel getStatusPanel() {
+	public BaseStatusPanel getStatusPanel() {
 		return cpu.getStatusPanel();
 	}
 

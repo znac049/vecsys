@@ -11,7 +11,7 @@ import javax.swing.JPanel;
 
 import uk.org.wookey.vecsys.cpus.Cpu;
 import uk.org.wookey.vecsys.cpus.CpuState;
-import uk.org.wookey.vecsys.cpus.StatusPanel;
+import uk.org.wookey.vecsys.cpus.BaseStatusPanel;
 import uk.org.wookey.vecsys.emulator.GBConstraints;
 import uk.org.wookey.vecsys.emulator.TTLabel;
 import uk.org.wookey.vecsys.utils.Logger;
@@ -38,7 +38,7 @@ public class SimpleCpu extends Cpu {
 		}
 	}
 	
-	private class SimpleStatusPanel extends StatusPanel {
+	private class SimpleStatusPanel extends BaseStatusPanel {
 		public SimpleStatusPanel() {
     		super();
     		setLayout(new GridBagLayout());
@@ -165,7 +165,7 @@ public class SimpleCpu extends Cpu {
 	}
 
 	@Override
-	public StatusPanel getStatusPanel() {
+	public BaseStatusPanel getStatusPanel() {
 		return statusPanel;
 	}
 

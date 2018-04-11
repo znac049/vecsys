@@ -5,10 +5,10 @@ import java.awt.GridBagLayout;
 
 import javax.swing.JPanel;
 
-public abstract class StatusPanel extends JPanel {
+public abstract class BaseStatusPanel extends JPanel {
 	protected boolean enabled;
 	
-	public StatusPanel() {
+	public BaseStatusPanel() {
 		super();
 		
 		setLayout(new GridBagLayout());

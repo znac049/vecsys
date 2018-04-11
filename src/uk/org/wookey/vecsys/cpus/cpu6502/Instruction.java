@@ -107,8 +107,8 @@ public class Instruction extends MinimalInstruction {
         }
     }
 
-	public Instruction(int opcode, String name, int size, Mode imp, int cycles) {
+	public Instruction(int opcode, String name, int size, Mode direct, int cycles) {
 		super(opcode, name, size, cycles);
-		this.mode = imp;
+		this.mode = direct;
 	}
 }

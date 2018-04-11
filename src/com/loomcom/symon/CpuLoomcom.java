@@ -33,7 +33,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import uk.org.wookey.vecsys.cpus.Cpu;
-import uk.org.wookey.vecsys.cpus.StatusPanel;
+import uk.org.wookey.vecsys.cpus.BaseStatusPanel;
 import uk.org.wookey.vecsys.emulator.Bus;
 import uk.org.wookey.vecsys.emulator.GBConstraints;
 import uk.org.wookey.vecsys.emulator.TTLabel;
@@ -89,7 +89,7 @@ public class CpuLoomcom extends Cpu implements InstructionTable {
     /* start time of op execution, needed for speed simulation */
     private long opBeginTime;
     
-    private class CpuStatusPanel extends StatusPanel {
+    private class CpuStatusPanel extends BaseStatusPanel {
     	private TTLabel pcReg;
     	private TTLabel aReg;
     	private TTLabel xReg;
@@ -2128,7 +2128,7 @@ public class CpuLoomcom extends Cpu implements InstructionTable {
 	}
 
 	@Override
-	public StatusPanel getStatusPanel() {
+	public BaseStatusPanel getStatusPanel() {
 		return statusPanel;
 	}
 

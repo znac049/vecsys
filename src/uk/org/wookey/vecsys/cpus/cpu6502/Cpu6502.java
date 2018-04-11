@@ -10,7 +10,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import uk.org.wookey.vecsys.cpus.Cpu;
-import uk.org.wookey.vecsys.cpus.StatusPanel;
+import uk.org.wookey.vecsys.cpus.BaseStatusPanel;
 import uk.org.wookey.vecsys.cpus.cpu6502.Instruction.Mode;
 import uk.org.wookey.vecsys.emulator.GBConstraints;
 import uk.org.wookey.vecsys.emulator.TTLabel;
@@ -308,7 +308,7 @@ public class Cpu6502 extends Cpu {
 			new Instruction(0xff, "BBS7", 3, Mode.ZPR, 7)
 	};
 
-    private class Cpu6502StatusPanel extends StatusPanel {
+    private class Cpu6502StatusPanel extends BaseStatusPanel {
     	private TTLabel pcReg;
     	private TTLabel aReg;
     	private TTLabel xReg;
@@ -494,7 +494,7 @@ public class Cpu6502 extends Cpu {
 	}
 
 	@Override
-	public StatusPanel getStatusPanel() {
+	public BaseStatusPanel getStatusPanel() {
 		// TODO Auto-generated method stub
 		return statusPanel;
 	}
