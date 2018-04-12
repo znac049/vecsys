@@ -11,6 +11,7 @@ import uk.org.wookey.vecsys.cpus.InstructionTable;
 import uk.org.wookey.vecsys.cpus.BaseStatusPanel;
 import uk.org.wookey.vecsys.cpus.cpu6x09.Instruction.Mode;
 import uk.org.wookey.vecsys.emulator.GBConstraints;
+import uk.org.wookey.vecsys.emulator.RangeException;
 import uk.org.wookey.vecsys.emulator.TTLabel;
 import uk.org.wookey.vecsys.utils.Logger;
 
@@ -70,7 +71,38 @@ public class Cpu6x09 extends Cpu {
 			
 			dp = 0;
 			v = 0;
-			cc = 0xa5;
+			cc = 0x50;
+		}
+
+		public int getInstructionCode() throws RangeException {
+			int code = state.instructionBuff[0];
+			
+			if ((code == 0x10) || (code == 0x11)) {
+				if (state.instructionLength < 1) {
+					throw new RangeException("Not enough code bytes");
+				}
+				code = (code << 8) | state.instructionBuff[1];
+			}
+			else if (state.instructionLength == 0) {
+				throw new RangeException("Not enough code bytes");
+			}
+			
+			return code;
+		}
+		
+		public int getByteOp() {
+			return state.instructionBuff[state.instructionLength-1];
+		}
+
+		public int getWordOp() {
+			return (state.instructionBuff[state.instructionLength-2]<<8) | state.instructionBuff[state.instructionLength-1];
+		}
+
+		public int getQuadOp() {
+			return (state.instructionBuff[state.instructionLength-4]<<24) | 
+					(state.instructionBuff[state.instructionLength-3]<<16) |
+					(state.instructionBuff[state.instructionLength-2]<<8) | 
+					state.instructionBuff[state.instructionLength-1];
 		}
 	}
 	
@@ -206,6 +238,8 @@ public class Cpu6x09 extends Cpu {
     		codeStr = new TTLabel("Wha?????");
     		codePanel.add(codeStr, BorderLayout.WEST);
     		
+    		gbc.gridwidth = GridBagConstraints.REMAINDER;
+    		gbc.weightx = 1.0;
     		add(codePanel, gbc);			
 		}
 
@@ -255,11 +289,11 @@ public class Cpu6x09 extends Cpu {
 				break;
 
 			case IMMBYTE:
-				res += String.format("#$%02x", state.instructionBuff[state.instructionLength-1]);
+				res += String.format("#$%02x", state.getByteOp());
 				break;
 				
 			case IMMWORD:
-				res += String.format("#$%02x%02x", state.instructionBuff[state.instructionLength-2], state.instructionBuff[state.instructionLength-1]);
+				res += String.format("#$%04x", state.getWordOp());
 				break;
 
 			case IMMQUAD:
@@ -267,15 +301,15 @@ public class Cpu6x09 extends Cpu {
 				break;
 
 			case DIRECT:
-				res += String.format("<$%02x", state.instructionBuff[state.instructionLength-1]);				
+				res += String.format("<$%02x", state.getByteOp());				
 				break;
 
 			case EXTENDED:
-				res += String.format("$%02x%02x", state.instructionBuff[state.instructionLength-2], state.instructionBuff[state.instructionLength-1]);				
+				res += String.format("$%04x", state.getWordOp());				
 				break;
 
 			case INDEXED:
-				res += String.format("[$%02x%02x]", state.instructionBuff[state.instructionLength-2], state.instructionBuff[state.instructionLength-1]);				
+				res += String.format("[$%04x]", state.getWordOp());				
 				break;
 
 			case SYSPOST:
@@ -547,6 +581,51 @@ public class Cpu6x09 extends Cpu {
 	}
 
 	private void executeInstruction() {
+		int inst;
+		int ea;
+		
+		try {
+			inst = state.getInstructionCode();
+			
+			switch (inst) {
+				case 0x001c:	// andcc
+					state.cc &= state.getByteOp();
+					break;
+					
+				case 0x0086:	// lda #
+					state.a = state.getByteOp();
+					break;
+					
+				case 0x8e:		//ldx	#
+					state.x = state.getWordOp();
+					break;
+					
+				case 0x00b7:	// sta $xxxx
+					ea = state.getWordOp();
+					bus.setWord(ea, state.a);
+					break;
+					
+				case 0x00c6:	// ldb #
+					state.b = state.getByteOp();
+					break;
+					
+				case 0x00f7:	// stb $xxxx
+					ea = state.getWordOp();
+					bus.setWord(ea, state.b);
+					break;
+					
+				case 0x108e:	//ldy	#
+					state.y = state.getWordOp();
+					break;
+					
+				default:
+					_log.logWarn(String.format("Unimplemented instruction $%04x at $%04x", inst, state.instructionStartAddress));
+					break;
+			}
+		} catch (IllegalAccessException | RangeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
