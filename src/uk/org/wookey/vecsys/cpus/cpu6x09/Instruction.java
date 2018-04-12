@@ -10,9 +10,11 @@ public class Instruction extends MinimalInstruction {
 	
 	public enum Mode {
 	       IMPLIED {
-	            public String toString() {
-	                return "Implied";
-	            }
+	    	   public int numBytes = 0;
+	    	   
+	    	   public String toString() {
+	    		   return "Implied";
+	    	   }
 	       },
 	       IMMBYTE {
 	    	   public String toString() {
@@ -99,13 +101,5 @@ public class Instruction extends MinimalInstruction {
 	public Instruction(int opcode, String name, int size, Mode imp, int cycles) {
 		super(opcode, name, size, cycles);
 		this.mode = imp;
-	}
-	
-	public int numModeBytes(Mode mode) {
-		int nBytes = 0;
-		
-		_log.logInfo(String.format("Number of mode bytes for %s is %d", mode.toString(), nBytes));
-		
-		return nBytes;
 	}
 }

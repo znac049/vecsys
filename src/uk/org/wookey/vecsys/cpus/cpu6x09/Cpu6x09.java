@@ -47,11 +47,14 @@ public class Cpu6x09 extends Cpu {
 		
 		public int cc;
 		
-		public int instructionSize;
-		public int instructionAddress;
+		public int instructionStartAddress;
+		public int instructionLength;
+		public int instructionBuff[];
 		public Instruction instruction;
-		
+
 		public CpuState() {
+			instructionBuff = new int[7];
+			
 			reset();
 		}
 		
@@ -204,7 +207,6 @@ public class Cpu6x09 extends Cpu {
     		codePanel.add(codeStr, BorderLayout.WEST);
     		
     		add(codePanel, gbc);			
-
 		}
 
 		@Override
@@ -229,8 +231,76 @@ public class Cpu6x09 extends Cpu {
 				ccReg.setText(String.format("%02x", state.cc));
 				ccStr.setText(ccString());
 
-				codeStr.setText(String.format("%02x", state.ir));
+				codeStr.setText(codeString());
 			}
+		}
+		
+		private String codeString() {
+			String res = String.format("%04x: ",  state.instructionStartAddress);
+			
+			for (int i=0; i<7; i++) {
+				if (i < state.instructionLength) {
+					res += String.format("%02x ",  state.instructionBuff[i]);
+				}
+				else {
+					res += "   ";
+				}
+			}
+			
+			res += String.format("%-6s", state.instruction.toString());
+			
+			switch (state.instruction.mode) {
+			case IMPLIED:
+				// No operand
+				break;
+
+			case IMMBYTE:
+				res += String.format("#$%02x", state.instructionBuff[state.instructionLength-2]);
+				break;
+				
+			case IMMWORD:
+				res += String.format("#$%02x%02x", state.instructionBuff[state.instructionLength-3], state.instructionBuff[state.instructionLength-2]);
+				break;
+
+			case IMMQUAD:
+				res += String.format("#$%02x%02x%02x%02x", state.instructionBuff[state.instructionLength-5], state.instructionBuff[state.instructionLength-4], state.instructionBuff[state.instructionLength-3], state.instructionBuff[state.instructionLength-2]);
+				break;
+
+			case DIRECT:
+				res += String.format("<$%02x", state.instructionBuff[state.instructionLength-2]);				
+				break;
+
+			case EXTENDED:
+				res += String.format("$%02x%02x", state.instructionBuff[state.instructionLength-3], state.instructionBuff[state.instructionLength-2]);				
+				break;
+
+			case INDEXED:
+				res += String.format("[$%02x%02x]", state.instructionBuff[state.instructionLength-3], state.instructionBuff[state.instructionLength-2]);				
+				break;
+
+			case BLKMOVE:
+				break;
+			case IMMDIRECT:
+				break;
+			case REGPOST:
+				break;
+			case REGREG:
+				break;
+			case RELBYTE:
+				break;
+			case RELWORD:
+				break;
+			case SINGLEBIT:
+				break;
+			case SYSPOST:
+				break;
+			case USRPOST:
+				break;
+			default:
+				break;	
+			}
+			
+			return res;
 		}
 		
 		private String ccString() {
@@ -272,22 +342,29 @@ public class Cpu6x09 extends Cpu {
 		statusPanel.update();
 	}
 
-	public void fetchNextInstruction() {
-		state.ir = bus.getByte(state.pc);
+	private int fetchByte() {
+		int b = bus.getByte(state.pc);
 		
-		state.instructionAddress = state.pc;
+		state.instructionBuff[state.instructionLength] = b;
+		state.instructionLength++;
+		
 		state.pc++;
-		state.instructionSize = 1;
+		
+		return b;
+	}
+	
+	public void fetchNextInstruction() {
+		state.instructionStartAddress = state.pc;
+		state.instructionLength = 0;
+		
+		state.ir = fetchByte();
+		
 		if (state.ir == 0x10) {
-			state.instructionSize++;
-			state.ir = bus.getByte(state.pc);
-			state.pc++;
+			state.ir = fetchByte();
 			state.instruction = (Instruction) prefix10.get(state.ir);
 		}
 		else if (state.ir == 0x11) {
-			state.instructionSize++;
-			state.ir = bus.getByte(state.pc);
-			state.pc++;
+			state.ir = fetchByte();
 			state.instruction = (Instruction) prefix11.get(state.ir);
 		}
 		else {
@@ -295,10 +372,9 @@ public class Cpu6x09 extends Cpu {
 		}
 		
 		if (state.instruction != null) {
-			state.instructionSize += state.instruction.numModeBytes(state.instruction.mode);
 		}
 		
-		_log.logInfo(String.format("Instruction at $%04x: %02x, %d bytes", state.pc, state.ir, state.instructionSize));
+		_log.logInfo(String.format("Instruction at $%04x: %02x, %d bytes", state.instructionStartAddress, state.ir, state.instructionLength));
 	}
 
 	@Override
@@ -310,6 +386,9 @@ public class Cpu6x09 extends Cpu {
 	public void step() {
 		executeInstruction();
 		fetchNextInstruction();
+		if (statusPanel.isEnabled()) {
+			statusPanel.update();
+		}
 	}
 
 	private void executeInstruction() {
