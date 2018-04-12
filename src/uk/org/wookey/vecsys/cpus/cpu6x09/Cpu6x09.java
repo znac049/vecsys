@@ -255,49 +255,161 @@ public class Cpu6x09 extends Cpu {
 				break;
 
 			case IMMBYTE:
-				res += String.format("#$%02x", state.instructionBuff[state.instructionLength-2]);
+				res += String.format("#$%02x", state.instructionBuff[state.instructionLength-1]);
 				break;
 				
 			case IMMWORD:
-				res += String.format("#$%02x%02x", state.instructionBuff[state.instructionLength-3], state.instructionBuff[state.instructionLength-2]);
+				res += String.format("#$%02x%02x", state.instructionBuff[state.instructionLength-2], state.instructionBuff[state.instructionLength-1]);
 				break;
 
 			case IMMQUAD:
-				res += String.format("#$%02x%02x%02x%02x", state.instructionBuff[state.instructionLength-5], state.instructionBuff[state.instructionLength-4], state.instructionBuff[state.instructionLength-3], state.instructionBuff[state.instructionLength-2]);
+				res += String.format("#$%02x%02x%02x%02x", state.instructionBuff[state.instructionLength-4], state.instructionBuff[state.instructionLength-3], state.instructionBuff[state.instructionLength-2], state.instructionBuff[state.instructionLength-1]);
 				break;
 
 			case DIRECT:
-				res += String.format("<$%02x", state.instructionBuff[state.instructionLength-2]);				
+				res += String.format("<$%02x", state.instructionBuff[state.instructionLength-1]);				
 				break;
 
 			case EXTENDED:
-				res += String.format("$%02x%02x", state.instructionBuff[state.instructionLength-3], state.instructionBuff[state.instructionLength-2]);				
+				res += String.format("$%02x%02x", state.instructionBuff[state.instructionLength-2], state.instructionBuff[state.instructionLength-1]);				
 				break;
 
 			case INDEXED:
-				res += String.format("[$%02x%02x]", state.instructionBuff[state.instructionLength-3], state.instructionBuff[state.instructionLength-2]);				
+				res += String.format("[$%02x%02x]", state.instructionBuff[state.instructionLength-2], state.instructionBuff[state.instructionLength-1]);				
+				break;
+
+			case SYSPOST:
+				res += regList('U');
+				break;
+				
+			case USRPOST:
+				res += regList('S');
+				break;
+
+			case RELWORD:
+				{
+					int delta = (state.instructionBuff[state.instructionLength-2] << 8) | state.instructionBuff[state.instructionLength-1];
+				
+					if ((delta & 0x8000) != 0) {
+						delta |= 0xffff0000;
+					}
+					res += String.format("delta %d",  delta);
+				}
+				break;
+				
+			case RELBYTE:
+				{	
+					int delta = state.instructionBuff[state.instructionLength-1];
+				
+					if ((delta & 0x80) != 0) {
+						delta |= 0xffffff00;
+					}
+					res += String.format("delta %d",  delta);
+				}
 				break;
 
 			case BLKMOVE:
+				res += "blockmove ";
 				break;
+				
 			case IMMDIRECT:
+				res += "IMMDIRECT";
 				break;
+				
 			case REGPOST:
+				res += "REGPOST";
 				break;
+				
 			case REGREG:
+				res += "REGREG";
 				break;
-			case RELBYTE:
-				break;
-			case RELWORD:
-				break;
+				
 			case SINGLEBIT:
+				res += "SINGLEBIT";
 				break;
-			case SYSPOST:
-				break;
-			case USRPOST:
-				break;
+				
 			default:
+				res += "BADBADBAD";
 				break;	
+			}
+			
+			return res;
+		}
+		
+		private String regList(char stack) {
+			int op = state.instructionBuff[state.instructionLength-1];
+			String res = "";
+			boolean first = true;
+			
+			if ((op & 0x80) != 0) {
+				if (!first) {
+					res += ",";
+					first = false;
+				}
+				
+				res += "PC";
+			}
+			
+			if ((op & 0x40) != 0) {
+				if (!first) {
+					res += ",";
+					first = false;
+				}
+				
+				res += stack;
+			}
+			
+			if ((op & 0x20) != 0) {
+				if (!first) {
+					res += ",";
+					first = false;
+				}
+				
+				res += "Y";
+			}
+			
+			if ((op & 0x10) != 0) {
+				if (!first) {
+					res += ",";
+					first = false;
+				}
+				
+				res += "X";
+			}
+			
+			if ((op & 0x08) != 0) {
+				if (!first) {
+					res += ",";
+					first = false;
+				}
+				
+				res += "DP";
+			}
+			
+			if ((op & 0x04) != 0) {
+				if (!first) {
+					res += ",";
+					first = false;
+				}
+				
+				res += "B";
+			}
+			
+			if ((op & 0x02) != 0) {
+				if (!first) {
+					res += ",";
+					first = false;
+				}
+				
+				res += "A";
+			}
+			
+			if ((op & 0x01) != 0) {
+				if (!first) {
+					res += ",";
+				}
+				
+				res += "CC";
 			}
 			
 			return res;
@@ -339,6 +451,8 @@ public class Cpu6x09 extends Cpu {
 		_log.logInfo(String.format("Read RESET vector @%04x -> %04x",  RESET_VEC, state.pc));
 		
 		fetchNextInstruction();
+		fetchOperand();
+		
 		statusPanel.update();
 	}
 
@@ -371,10 +485,48 @@ public class Cpu6x09 extends Cpu {
 			state.instruction = (Instruction) noPrefix.get(state.ir);
 		}
 		
-		if (state.instruction != null) {
-		}
 		
 		_log.logInfo(String.format("Instruction at $%04x: %02x, %d bytes", state.instructionStartAddress, state.ir, state.instructionLength));
+	}
+	
+	public void fetchOperand() {
+		if (state.instruction != null) {
+			switch (state.instruction.mode) {
+			case BLKMOVE:
+			case IMPLIED:
+			case INDEXED:
+			case REGPOST:
+			case REGREG:
+			case SINGLEBIT:
+			case IMMDIRECT:
+				break;
+
+			case DIRECT:
+			case IMMBYTE:
+			case RELBYTE:
+			case SYSPOST:
+			case USRPOST:
+				fetchByte();
+				break;
+
+			case IMMWORD:
+			case RELWORD:
+			case EXTENDED:
+				fetchByte();
+				fetchByte();
+				break;
+				
+			case IMMQUAD:
+				fetchByte();
+				fetchByte();
+				fetchByte();
+				fetchByte();
+				break;
+
+			default:
+				break;		
+			}
+		}		
 	}
 
 	@Override
@@ -385,7 +537,10 @@ public class Cpu6x09 extends Cpu {
 	@Override
 	public void step() {
 		executeInstruction();
+		
 		fetchNextInstruction();
+		fetchOperand();
+		
 		if (statusPanel.isEnabled()) {
 			statusPanel.update();
 		}
