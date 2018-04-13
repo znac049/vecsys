@@ -28,8 +28,22 @@ public class Cpu6x09 extends Cpu {
 	InstructionTable prefix11;
 
 	public class CpuState {
+		private static final int CC_E = 0x80;
+		private static final int CC_F = 0x40;
+		private static final int CC_H = 0x20;
+		private static final int CC_I = 0x10;
+		private static final int CC_N = 0x08;
+		private static final int CC_Z = 0x04;
+		private static final int CC_V = 0x02;
+		private static final int CC_C = 0x01;
+		
 		public int pc;
+		
 		public int ir;
+		public int irByteCount;
+		
+		public int pb;
+		public int pbByteCount;
 		
 		public int a;
 		public int b;
@@ -48,13 +62,13 @@ public class Cpu6x09 extends Cpu {
 		
 		public int cc;
 		
-		public int instructionStartAddress;
-		public int instructionLength;
-		public int instructionBuff[];
+		public int startAddress;
+		public int instByteCount;
+		public int instBuff[];
 		public Instruction instruction;
 
 		public CpuState() {
-			instructionBuff = new int[7];
+			instBuff = new int[7];
 			
 			reset();
 		}
@@ -74,35 +88,20 @@ public class Cpu6x09 extends Cpu {
 			cc = 0x50;
 		}
 
-		public int getInstructionCode() throws RangeException {
-			int code = state.instructionBuff[0];
-			
-			if ((code == 0x10) || (code == 0x11)) {
-				if (state.instructionLength < 1) {
-					throw new RangeException("Not enough code bytes");
-				}
-				code = (code << 8) | state.instructionBuff[1];
+		public void setStdFlags(int val) {
+			if ((val & 0x80) != 0) {
+				state.cc |= CC_N;
 			}
-			else if (state.instructionLength == 0) {
-				throw new RangeException("Not enough code bytes");
+			else {
+				state.cc &= ~CC_N;
 			}
 			
-			return code;
-		}
-		
-		public int getByteOp() {
-			return state.instructionBuff[state.instructionLength-1];
-		}
-
-		public int getWordOp() {
-			return (state.instructionBuff[state.instructionLength-2]<<8) | state.instructionBuff[state.instructionLength-1];
-		}
-
-		public int getQuadOp() {
-			return (state.instructionBuff[state.instructionLength-4]<<24) | 
-					(state.instructionBuff[state.instructionLength-3]<<16) |
-					(state.instructionBuff[state.instructionLength-2]<<8) | 
-					state.instructionBuff[state.instructionLength-1];
+			if (val == 0) {
+				state.cc |= CC_Z;
+			}
+			else {
+				state.cc &= ~CC_Z;
+			}
 		}
 	}
 	
@@ -270,11 +269,11 @@ public class Cpu6x09 extends Cpu {
 		}
 		
 		private String codeString() {
-			String res = String.format("%04x: ",  state.instructionStartAddress);
+			String res = String.format("%04x: ",  state.startAddress);
 			
 			for (int i=0; i<7; i++) {
-				if (i < state.instructionLength) {
-					res += String.format("%02x ",  state.instructionBuff[i]);
+				if (i < state.instByteCount) {
+					res += String.format("%02x ",  state.instBuff[i]);
 				}
 				else {
 					res += "   ";
@@ -289,27 +288,167 @@ public class Cpu6x09 extends Cpu {
 				break;
 
 			case IMMBYTE:
-				res += String.format("#$%02x", state.getByteOp());
+				res += String.format("#$%02x", state.pb);
 				break;
 				
 			case IMMWORD:
-				res += String.format("#$%04x", state.getWordOp());
+				res += String.format("#$%04x", state.pb);
 				break;
 
 			case IMMQUAD:
-				res += String.format("#$%02x%02x%02x%02x", state.instructionBuff[state.instructionLength-4], state.instructionBuff[state.instructionLength-3], state.instructionBuff[state.instructionLength-2], state.instructionBuff[state.instructionLength-1]);
+				res += String.format("#$%02x%02x%02x%02x", state.instBuff[state.instByteCount-4], state.instBuff[state.instByteCount-3], state.instBuff[state.instByteCount-2], state.instBuff[state.instByteCount-1]);
 				break;
 
 			case DIRECT:
-				res += String.format("<$%02x", state.getByteOp());				
+				res += String.format("<$%02x", state.pb);				
 				break;
 
 			case EXTENDED:
-				res += String.format("$%04x", state.getWordOp());				
+				res += String.format("$%04x", state.pb);				
 				break;
 
 			case INDEXED:
-				res += String.format("[$%04x]", state.getWordOp());				
+				{
+					int mode = state.instBuff[state.irByteCount];
+					final String regNames[] = {"X","Y","U","S"}; 
+					
+					if ((mode & 0x80) == 0) {
+						// 5-bit offset
+						int reg = (mode >> 5) & 0x03;
+						mode &= 0x1f;
+						
+						// sign extend...
+						if ((mode & 0x10) != 0) {
+							mode |= 0xfffffff0;
+						}
+						
+						res += String.format("%d,%s", mode, regNames[reg]);
+					}
+					else {
+						int reg = (mode >> 5) & 0x03;
+						
+						switch (mode & 0x1f) {
+						case 0x00:
+							res += String.format(",%s+", regNames[reg]);
+							break;
+							
+						case 0x01:
+							res += String.format(",%s++", regNames[reg]);
+							break;
+							
+						case 0x02:
+							res += String.format(",-%s", regNames[reg]);
+							break;
+							
+						case 0x03:
+							res += String.format(",--%s", regNames[reg]);
+							break;
+							
+						case 0x04:
+							res += String.format(",%s", regNames[reg]);
+							break;
+							
+						case 0x05:
+							res += String.format("B,%s", regNames[reg]);
+							break;
+							
+						case 0x06:
+							res += String.format("A,%s", regNames[reg]);
+							break;
+							
+						case 0x07:
+							res += String.format("E,%s", regNames[reg]);
+							break;
+							
+						case 0x08:
+							res += String.format("%d,%s", sexByte(state.pb & 0xff), regNames[reg]);
+							break;
+							
+						case 0x09:
+							res += String.format("%d,%s", sexWord(state.pb & 0xffff), regNames[reg]);
+							break;
+							
+						case 0x0a:
+							res += String.format("F,%s", regNames[reg]);
+							break;
+							
+						case 0x0b:
+							res += String.format("D,%s", regNames[reg]);
+							break;
+							
+						case 0x0c:
+							res += String.format("%d,PCR", sexByte(state.pb & 0xff));
+							break;
+							
+						case 0x0d:
+							res += String.format("%d,PCR", sexWord(state.pb & 0xffff));
+							break;
+							
+						case 0x0e:
+							res += String.format("W,%s", regNames[reg]);
+							break;
+							
+						case 0x11:
+							res += String.format("[,%s++]", regNames[reg]);
+							break;
+							
+						case 0x13:
+							res += String.format("[,--%s]", regNames[reg]);
+							break;
+							
+						case 0x14:
+							res += String.format("[,%s]", regNames[reg]);
+							break;
+							
+						case 0x15:
+							res += String.format("[B,%s]", regNames[reg]);
+							break;
+							
+						case 0x16:
+							res += String.format("[A,%s]", regNames[reg]);
+							break;
+							
+						case 0x17:
+							res += String.format("[E,%s]", regNames[reg]);
+							break;
+							
+						case 0x18:
+							res += String.format("[%d,%s]", sexByte(state.pb & 0xff), regNames[reg]);
+							break;
+							
+						case 0x19:
+							res += String.format("[%d,%s]", sexWord(state.pb & 0xffff), regNames[reg]);
+							break;
+							
+						case 0x1a:
+							res += String.format("[F,%s]", regNames[reg]);
+							break;
+							
+						case 0x1b:
+							res += String.format("[D,%s]", regNames[reg]);
+							break;
+							
+						case 0x1c:
+							res += String.format("[%d,PCR]", sexByte(state.pb & 0xff));
+							break;
+							
+						case 0x1d:
+							res += String.format("[%d,PCR]", sexWord(state.pb & 0xffff));
+							break;
+							
+						case 0x1e:
+							res += String.format("[W,%s]", regNames[reg]);
+							break;
+							
+						case 0x1f:
+							res += String.format("[%d]", sexWord(state.pb & 0xffff));
+							break;
+							
+						}
+						res += String.format("INDEXED mode: %02x", mode);						
+					}
+					
+				}
 				break;
 
 			case SYSPOST:
@@ -322,23 +461,17 @@ public class Cpu6x09 extends Cpu {
 
 			case RELWORD:
 				{
-					int delta = (state.instructionBuff[state.instructionLength-2] << 8) | state.instructionBuff[state.instructionLength-1];
+					int delta = sexWord(state.pb & 0xffff);
 				
-					if ((delta & 0x8000) != 0) {
-						delta |= 0xffff0000;
-					}
-					res += String.format("delta %d",  delta);
+					res += String.format("$%04x",  state.pc + delta);
 				}
 				break;
 				
 			case RELBYTE:
 				{	
-					int delta = state.instructionBuff[state.instructionLength-1];
+					int delta = sexByte(state.pb & 0xff);
 				
-					if ((delta & 0x80) != 0) {
-						delta |= 0xffffff00;
-					}
-					res += String.format("delta %d",  delta);
+					res += String.format("$%04x",  state.pc + delta);
 				}
 				break;
 
@@ -371,7 +504,7 @@ public class Cpu6x09 extends Cpu {
 		}
 		
 		private String regList(char stack) {
-			int op = state.instructionBuff[state.instructionLength-1];
+			int op = state.instBuff[state.instByteCount-1];
 			String res = "";
 			boolean first = true;
 			
@@ -493,34 +626,53 @@ public class Cpu6x09 extends Cpu {
 	private int fetchByte() {
 		int b = bus.getByte(state.pc);
 		
-		state.instructionBuff[state.instructionLength] = b;
-		state.instructionLength++;
+		state.instBuff[state.instByteCount] = b;
+		state.instByteCount++;
 		
 		state.pc++;
 		
 		return b;
 	}
 	
-	public void fetchNextInstruction() {
-		state.instructionStartAddress = state.pc;
-		state.instructionLength = 0;
+	private int fetchIRByte() {
+		int b = fetchByte();
 		
-		state.ir = fetchByte();
+		state.ir = ((state.ir << 8) | b) & 0xffff;
+		state.irByteCount++;
+		
+		return b;
+	}
+	
+	private int fetchPostByte() {
+		int b = fetchByte();
+		
+		state.pb = (state.pb << 8) | b;
+		state.pbByteCount++;
+		
+		return b;
+	}
+	
+	public void fetchNextInstruction() {
+		state.startAddress = state.pc;
+		state.instByteCount = 0;
+		state.ir = state.irByteCount = 0;
+		state.pb = state.pbByteCount = 0;
+		
+		fetchIRByte();
 		
 		if (state.ir == 0x10) {
-			state.ir = fetchByte();
+			fetchIRByte();
 			state.instruction = (Instruction) prefix10.get(state.ir);
 		}
 		else if (state.ir == 0x11) {
-			state.ir = fetchByte();
+			fetchIRByte();
 			state.instruction = (Instruction) prefix11.get(state.ir);
 		}
 		else {
 			state.instruction = (Instruction) noPrefix.get(state.ir);
-		}
+		}		
 		
-		
-		_log.logInfo(String.format("Instruction at $%04x: %02x, %d bytes", state.instructionStartAddress, state.ir, state.instructionLength));
+		_log.logInfo(String.format("Instruction at $%04x: %04x, %d bytes", state.startAddress, state.ir, state.irByteCount));
 	}
 	
 	public void fetchOperand() {
@@ -528,7 +680,6 @@ public class Cpu6x09 extends Cpu {
 			switch (state.instruction.mode) {
 			case BLKMOVE:
 			case IMPLIED:
-			case INDEXED:
 			case REGPOST:
 			case REGREG:
 			case SINGLEBIT:
@@ -540,23 +691,172 @@ public class Cpu6x09 extends Cpu {
 			case RELBYTE:
 			case SYSPOST:
 			case USRPOST:
-				fetchByte();
+				fetchPostByte();
 				break;
 
 			case IMMWORD:
 			case RELWORD:
 			case EXTENDED:
-				fetchByte();
-				fetchByte();
+				fetchPostByte();
+				fetchPostByte();
 				break;
 				
 			case IMMQUAD:
-				fetchByte();
-				fetchByte();
-				fetchByte();
-				fetchByte();
+				fetchPostByte();
+				fetchPostByte();
+				fetchPostByte();
+				fetchPostByte();
 				break;
 
+			case INDEXED:
+				{
+					int postByte = fetchPostByte();
+					
+					_log.logInfo(String.format("Indexed - work out how many post bytes; first: %02x", postByte));
+					
+					// top bit clear is a simple 5bit offset
+					if ((postByte & 0x80) == 0) {
+						_log.logInfo("Simple 5-bit offset");
+					}
+					else {
+						// Inspect the bottom five bits to see what's going on
+						int indexMode = postByte & 0x1f;
+						
+						switch (indexMode) {
+						case 0x00:
+							_log.logInfo("Post +1");
+							break;
+							
+						case 0x01:
+							_log.logInfo("Post +2");
+							break;
+							
+						case 0x02:
+							_log.logInfo("Pre -1");
+							break;
+							
+						case 0x03:
+							_log.logInfo("Pre -2");
+							break;
+							
+						case 0x04:
+							_log.logInfo("No offset");
+							break;
+							
+						case 0x05:
+							_log.logInfo("B offset");
+							break;
+							
+						case 0x06:
+							_log.logInfo("A offset");
+							break;
+							
+						case 0x07:
+							_log.logInfo("E offset");
+							break;
+							
+						case 0x08:
+							_log.logInfo("8-bit offset");
+							fetchPostByte();
+							break;
+							
+						case 0x09:
+							_log.logInfo("16-bit offset");
+							fetchPostByte();
+							fetchPostByte();
+							break;
+
+						case 0x0a:
+							_log.logInfo("F offset");
+							break;
+
+						case 0x0b:
+							_log.logInfo("D offset");
+							break;
+
+						case 0x0c:
+							_log.logInfo("8-bit,PCR");
+							fetchPostByte();
+							break;
+
+						case 0x0d:
+							_log.logInfo("16-bit,PCR");
+							fetchPostByte();
+							fetchPostByte();
+							break;
+
+						case 0x0e:
+							_log.logInfo("D offset");
+							break;
+							
+						case 0x11:
+							_log.logInfo("Indirect post +2");
+							break;
+							
+						case 0x13:
+							_log.logInfo("Indirect pre -2");
+							break;
+							
+						case 0x14:
+							_log.logInfo("Indirect no offset");
+							break;
+							
+						case 0x15:
+							_log.logInfo("Indirect B");
+							break;
+							
+						case 0x16:
+							_log.logInfo("Indirect A");
+							break;
+							
+						case 0x17:
+							_log.logInfo("Indirect E");
+							break;
+							
+						case 0x18:
+							_log.logInfo("Indirect 8-bit offset");
+							fetchPostByte();
+							break;
+							
+						case 0x19:
+							_log.logInfo("Indirect 16-bit offset");
+							fetchPostByte();
+							fetchPostByte();
+							break;
+							
+						case 0x1a:
+							_log.logInfo("Indirect F");
+							break;
+							
+						case 0x1b:
+							_log.logInfo("Indirect D");
+							break;
+							
+						case 0x1c:
+							_log.logInfo("Indirect 8-bit,PCR");
+							fetchPostByte();
+							break;
+							
+						case 0x1d:
+							_log.logInfo("Indirect 16-bit,PCR");
+							fetchPostByte();
+							fetchPostByte();
+							break;
+							
+						case 0x1e:
+							_log.logInfo("Indirect W");
+							break;
+							
+						case 0x1f:
+							_log.logInfo("Indirect extended");
+							fetchPostByte();
+							fetchPostByte();
+							break;							
+						}
+					}
+				}
+				break;
+				
 			default:
 				break;		
 			}
@@ -580,51 +880,137 @@ public class Cpu6x09 extends Cpu {
 		}
 	}
 
+	private int sexByte(int b) {
+		if ((b & 0x80) != 0) {
+			b |= 0xffffff00;
+		}
+		
+		return b;
+	}
+	
+	private int sexWord(int b) {
+		if ((b & 0x8000) != 0) {
+			b |= 0xffff0000;
+		}
+		
+		return b;
+	}
+	
+	private void negInst(int addr) {
+		int val = bus.getByte(addr);
+
+		// Special case - $80 (-128) won't fit into 8 bits when negated
+		if ((val & 0x80) != 0) {
+			state.cc |= CpuState.CC_V;
+		}
+		else {
+			state.cc &= ~CpuState.CC_V;
+		}
+
+		// Special case - negating zero will yield 0
+		if (val == 0) {
+			state.cc &= ~CpuState.CC_C;
+		}
+		else {
+			state.cc |= CpuState.CC_C;
+		}
+		
+		val = (-sexByte(val)) & 0xff;
+		state.setStdFlags(val);
+		
+		bus.setByte(addr, val);
+	}
+	
+	private void ldaInst(int val) {
+		state.a = val;
+		
+		// CC flags
+		state.setStdFlags(val);
+		state.cc &= ~CpuState.CC_V;
+	}
+	
+	private void staInst(int addr) {
+		 bus.setByte(addr, state.a);
+		
+		// CC flags
+		state.setStdFlags(state.a);
+		state.cc &= ~CpuState.CC_V;
+	}
+	
+	private void ldbInst(int val) {
+		state.b = val;
+		
+		// CC flags
+		state.setStdFlags(val);
+		state.cc &= ~CpuState.CC_V;
+	}
+	
+	private void stbInst(int addr) {
+		 bus.setByte(addr, state.b);
+		
+		// CC flags
+		state.setStdFlags(state.b);
+		state.cc &= ~CpuState.CC_V;
+	}
+	
+	private void ldxInst(int val) {
+		state.x = val;
+		
+		// CC flags
+		state.setStdFlags(val);
+		state.cc &= ~CpuState.CC_V;
+	}
+	
+	private void ldyInst(int val) {
+		state.y = val;
+		
+		// CC flags
+		state.setStdFlags(val);
+		state.cc &= ~CpuState.CC_V;
+	}
+	
 	private void executeInstruction() {
-		int inst;
 		int ea;
 		
-		try {
-			inst = state.getInstructionCode();
-			
-			switch (inst) {
-				case 0x001c:	// andcc
-					state.cc &= state.getByteOp();
-					break;
-					
-				case 0x0086:	// lda #
-					state.a = state.getByteOp();
-					break;
-					
-				case 0x8e:		//ldx	#
-					state.x = state.getWordOp();
-					break;
-					
-				case 0x00b7:	// sta $xxxx
-					ea = state.getWordOp();
-					bus.setWord(ea, state.a);
-					break;
-					
-				case 0x00c6:	// ldb #
-					state.b = state.getByteOp();
-					break;
-					
-				case 0x00f7:	// stb $xxxx
-					ea = state.getWordOp();
-					bus.setWord(ea, state.b);
-					break;
-					
-				case 0x108e:	//ldy	#
-					state.y = state.getWordOp();
-					break;
-					
-				default:
-					_log.logWarn(String.format("Unimplemented instruction $%04x at $%04x", inst, state.instructionStartAddress));
-					break;
-			}
-		} catch (IllegalAccessException | RangeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		switch (state.ir) {
+			case 0x00:		// neg	$xxxx
+				ea = state.pb;
+				negInst(ea);
+				break;
+				
+			case 0x1c:		// andcc
+				state.cc &= state.pb;
+				break;
+				
+			case 0x86:		// lda #
+				ldaInst(state.pb);
+				break;
+				
+			case 0x8e:		// ldx	#
+				ldxInst(state.pb);
+				break;
+				
+			case 0xb7:		// sta $xxxx
+				ea = state.pb;
+				staInst(ea);
+				break;
+				
+			case 0xc6:	// ldb #
+				ldbInst(state.pb);
+				break;
+				
+			case 0xf7:	// stb $xxxx
+				ea = state.pb;
+				stbInst(ea);
+				break;
+				
+			case 0x108e:	//ldy	#
+				ldyInst(state.pb);
+				break;
+				
+			default:
+				_log.logWarn(String.format("Unimplemented instruction $%04x at $%04x", state.ir, state.startAddress));
+				break;
 		}
 	}
 

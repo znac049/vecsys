@@ -21,6 +21,6 @@ public class InstructionTable {
 	}
 
 	public MinimalInstruction get(int ir) {
-		return instructions[ir];
+		return instructions[ir & 0xff];
 	}
 }
