@@ -87,7 +87,25 @@ public class Cpu6x09 extends Cpu {
 			v = 0;
 			cc = 0x50;
 		}
+		
+		public int getD() {
+			return (a << 8) | b;
+		}
+		
+		public void setD(int val) {
+			state.b = (val & 0xff);
+			state.a = (val >> 8) & 0xff;
+		}
+		
+		public int getW() {
+			return (e<<8) | f;
+		}
 
+		public void setW(int val) {
+			state.f = (val & 0xff);
+			state.e = (val >> 8) & 0xff;
+		}
+		
 		public void setStdFlags(int val) {
 			if ((val & 0x80) != 0) {
 				state.cc |= CC_N;
@@ -103,6 +121,59 @@ public class Cpu6x09 extends Cpu {
 				state.cc &= ~CC_Z;
 			}
 		}
+		
+		public void setZ(boolean zFlag) {
+			setZ(zFlag?1:0);
+		}
+
+		public void setZ(int val) {
+			if (val != 0) {
+				state.cc |= CpuState.CC_Z;
+			}
+			else {
+				state.cc &= ~CpuState.CC_Z;
+			}
+		}
+		
+		public void setN(boolean nFlag) {
+			setN(nFlag?1:0);
+		}
+
+		public void setN(int val) {
+			if (val != 0) {
+				state.cc |= CpuState.CC_N;
+			}
+			else {
+				state.cc &= ~CpuState.CC_N;
+			}
+		}
+		
+		public void setV(boolean vFlag) {
+			setV(vFlag?1:0);
+		}
+
+		public void setV(int val) {
+			if (val != 0) {
+				state.cc |= CpuState.CC_V;
+			}
+			else {
+				state.cc &= ~CpuState.CC_V;
+			}
+		}
+		
+		public void setC(boolean cFlag) {
+			setC(cFlag?1:0);
+		}
+
+		public void setC(int val) {
+			if (val != 0) {
+				state.cc |= CpuState.CC_C;
+			}
+			else {
+				state.cc &= ~CpuState.CC_C;
+			}
+		}
+
 	}
 	
 	public class StatusPanel extends BaseStatusPanel {
@@ -128,7 +199,7 @@ public class Cpu6x09 extends Cpu {
 		
 		private TTLabel codeStr;
 		
-		private Color headingColour = Color.YELLOW;
+		private Color headingColour = new Color(0, 0, 196);
 
 		public StatusPanel() {
 			super();
@@ -234,11 +305,13 @@ public class Cpu6x09 extends Cpu {
     		
     		codePanel.setBackground(Color.DARK_GRAY);
     		
-    		codeStr = new TTLabel("Wha?????");
+    		codeStr = new TTLabel("Wha?????", Color.GREEN);
+    	
     		codePanel.add(codeStr, BorderLayout.WEST);
     		
-    		gbc.gridwidth = GridBagConstraints.REMAINDER;
+    		gbc.gridwidth = 10;
     		gbc.weightx = 1.0;
+    		gbc.fill = GridBagConstraints.HORIZONTAL;
     		add(codePanel, gbc);			
 		}
 
@@ -484,7 +557,13 @@ public class Cpu6x09 extends Cpu {
 				break;
 				
 			case REGPOST:
-				res += "REGPOST";
+				{
+					final String regNames[] = {"D", "X","Y","U","S","PC","W","V","A","B","CC","DP","??","??","E","F"};
+					int r1 = (state.pb>>4) & 0x0f;
+					int r2 = state.pb & 0x0f;
+					
+					res += String.format("%s,%s", regNames[r1], regNames[r2]);
+				}
 				break;
 				
 			case REGREG:
@@ -672,7 +751,7 @@ public class Cpu6x09 extends Cpu {
 			state.instruction = (Instruction) noPrefix.get(state.ir);
 		}		
 		
-		_log.logInfo(String.format("Instruction at $%04x: %04x, %d bytes", state.startAddress, state.ir, state.irByteCount));
+		//_log.logInfo(String.format("Instruction at $%04x: %04x, %d bytes", state.startAddress, state.ir, state.irByteCount));
 	}
 	
 	public void fetchOperand() {
@@ -680,17 +759,17 @@ public class Cpu6x09 extends Cpu {
 			switch (state.instruction.mode) {
 			case BLKMOVE:
 			case IMPLIED:
-			case REGPOST:
 			case REGREG:
 			case SINGLEBIT:
-			case IMMDIRECT:
 				break;
 
 			case DIRECT:
 			case IMMBYTE:
+			case IMMDIRECT:
 			case RELBYTE:
 			case SYSPOST:
 			case USRPOST:
+			case REGPOST:
 				fetchPostByte();
 				break;
 
@@ -712,11 +791,11 @@ public class Cpu6x09 extends Cpu {
 				{
 					int postByte = fetchPostByte();
 					
-					_log.logInfo(String.format("Indexed - work out how many post bytes; first: %02x", postByte));
+					//_log.logInfo(String.format("Indexed - work out how many post bytes; first: %02x", postByte));
 					
 					// top bit clear is a simple 5bit offset
 					if ((postByte & 0x80) == 0) {
-						_log.logInfo("Simple 5-bit offset");
+						//_log.logInfo("Simple 5-bit offset");
 					}
 					else {
 						// Inspect the bottom five bits to see what's going on
@@ -724,131 +803,39 @@ public class Cpu6x09 extends Cpu {
 						
 						switch (indexMode) {
 						case 0x00:
-							_log.logInfo("Post +1");
-							break;
-							
 						case 0x01:
-							_log.logInfo("Post +2");
-							break;
-							
 						case 0x02:
-							_log.logInfo("Pre -1");
-							break;
-							
 						case 0x03:
-							_log.logInfo("Pre -2");
-							break;
-							
 						case 0x04:
-							_log.logInfo("No offset");
-							break;
-							
 						case 0x05:
-							_log.logInfo("B offset");
-							break;
-							
 						case 0x06:
-							_log.logInfo("A offset");
-							break;
-							
 						case 0x07:
-							_log.logInfo("E offset");
+						case 0x0a:
+						case 0x0b:
+						case 0x0e:
+						case 0x11:
+						case 0x13:
+						case 0x14:
+						case 0x15:
+						case 0x16:
+						case 0x17:
+						case 0x1a:
+						case 0x1b:
+						case 0x1e:
 							break;
 							
 						case 0x08:
-							_log.logInfo("8-bit offset");
+						case 0x0c:
+						case 0x18:
+						case 0x1c:
 							fetchPostByte();
 							break;
 							
 						case 0x09:
-							_log.logInfo("16-bit offset");
-							fetchPostByte();
-							fetchPostByte();
-							break;
-
-						case 0x0a:
-							_log.logInfo("F offset");
-							break;
-
-						case 0x0b:
-							_log.logInfo("D offset");
-							break;
-
-						case 0x0c:
-							_log.logInfo("8-bit,PCR");
-							fetchPostByte();
-							break;
-
 						case 0x0d:
-							_log.logInfo("16-bit,PCR");
-							fetchPostByte();
-							fetchPostByte();
-							break;
-
-						case 0x0e:
-							_log.logInfo("D offset");
-							break;
-							
-						case 0x11:
-							_log.logInfo("Indirect post +2");
-							break;
-							
-						case 0x13:
-							_log.logInfo("Indirect pre -2");
-							break;
-							
-						case 0x14:
-							_log.logInfo("Indirect no offset");
-							break;
-							
-						case 0x15:
-							_log.logInfo("Indirect B");
-							break;
-							
-						case 0x16:
-							_log.logInfo("Indirect A");
-							break;
-							
-						case 0x17:
-							_log.logInfo("Indirect E");
-							break;
-							
-						case 0x18:
-							_log.logInfo("Indirect 8-bit offset");
-							fetchPostByte();
-							break;
-							
 						case 0x19:
-							_log.logInfo("Indirect 16-bit offset");
-							fetchPostByte();
-							fetchPostByte();
-							break;
-							
-						case 0x1a:
-							_log.logInfo("Indirect F");
-							break;
-							
-						case 0x1b:
-							_log.logInfo("Indirect D");
-							break;
-							
-						case 0x1c:
-							_log.logInfo("Indirect 8-bit,PCR");
-							fetchPostByte();
-							break;
-							
 						case 0x1d:
-							_log.logInfo("Indirect 16-bit,PCR");
-							fetchPostByte();
-							fetchPostByte();
-							break;
-							
-						case 0x1e:
-							_log.logInfo("Indirect W");
-							break;
-							
 						case 0x1f:
-							_log.logInfo("Indirect extended");
 							fetchPostByte();
 							fetchPostByte();
 							break;							
@@ -880,20 +867,23 @@ public class Cpu6x09 extends Cpu {
 		}
 	}
 
-	private int sexByte(int b) {
-		if ((b & 0x80) != 0) {
-			b |= 0xffffff00;
+	private int sexVal(int b, int bits) {
+		int mask = 1 << (bits-1);
+		int negBits = -mask;
+		
+		if ((b & mask) != 0) {
+			b |= negBits;
 		}
 		
 		return b;
 	}
 	
+	private int sexByte(int b) {
+		return sexVal(b, 8);
+	}
+	
 	private int sexWord(int b) {
-		if ((b & 0x8000) != 0) {
-			b |= 0xffff0000;
-		}
-		
-		return b;
+		return sexVal(b, 16);
 	}
 	
 	private void negInst(int addr) {
@@ -921,35 +911,50 @@ public class Cpu6x09 extends Cpu {
 		bus.setByte(addr, val);
 	}
 	
-	private void ldaInst(int val) {
-		state.a = val;
+	private void comInst(int addr) {
+		int val = ~bus.getByte(addr);
+		
+		state.setStdFlags(val);
+		state.cc &= ~CpuState.CC_V;
+		
+		bus.setByte(addr, val);
+	}
+	
+	private void lsrInst(int addr) {
+		int val = bus.getByte(addr);
+		
+		state.setC(val & 0x01);
+		val = val >> 1;
+		state.setStdFlags(val);
+		state.setV(0);
+		
+		bus.setByte(addr, val);
+	}
+	
+	private void rorInst(int addr) {
+		int val = bus.getByte(addr);
+		
+		state.setC(val & 0x01);
+		val = val >> 1;
+		state.setStdFlags(val);
+		state.setV(0);
+		
+		bus.setByte(addr, val);
+	}
+	
+	private int ld8Inst(int val) {
+		// CC flags
+		state.setStdFlags(val);
+		state.setV(0);
+		
+		return val;
+	}
+	
+	private void st8Inst(int addr, int val) {
+		 bus.setByte(addr, val);
 		
 		// CC flags
 		state.setStdFlags(val);
-		state.cc &= ~CpuState.CC_V;
-	}
-	
-	private void staInst(int addr) {
-		 bus.setByte(addr, state.a);
-		
-		// CC flags
-		state.setStdFlags(state.a);
-		state.cc &= ~CpuState.CC_V;
-	}
-	
-	private void ldbInst(int val) {
-		state.b = val;
-		
-		// CC flags
-		state.setStdFlags(val);
-		state.cc &= ~CpuState.CC_V;
-	}
-	
-	private void stbInst(int addr) {
-		 bus.setByte(addr, state.b);
-		
-		// CC flags
-		state.setStdFlags(state.b);
 		state.cc &= ~CpuState.CC_V;
 	}
 	
@@ -969,21 +974,339 @@ public class Cpu6x09 extends Cpu {
 		state.cc &= ~CpuState.CC_V;
 	}
 	
-	private void executeInstruction() {
-		int ea;
+	private void bneInst(int addr) {
+		if ((state.cc & CpuState.CC_Z) == 0) {
+			state.pc = addr;
+		}
+	}
+	
+	private void beqInst(int addr) {
+		if ((state.cc & CpuState.CC_Z) != 0) {
+			state.pc = addr;
+		}
+	}
+	
+	private void rtsInst() {
+		state.pc = bus.getWord(state.s);
+		state.s = (state.s + 2) & 0xffff;
+	}
+	
+	private void exgInst() {
+		int r1 = (state.pb >> 4) & 0x0f;
+		int r2 = state.pb & 0x0f;
 		
+		int regVal = getReg(r1);
+		
+		setReg(r1, getReg(r2));
+		setReg(r2, regVal);
+	}
+	
+	private int getReg(int rr) {
+		switch (rr) {
+		case 0:
+			return state.getD();
+			
+		case 1:
+			return state.x;
+			
+		case 2:
+			return state.y;
+			
+		case 3:
+			return state.u;
+			
+		case 4:
+			return state.s;
+			
+		case 5:
+			return state.pc;
+			
+		case 6:
+			return state.getW();
+			
+		case 7:
+			return state.v;
+			
+		case 8:
+			return state.a;
+			
+		case 9:
+			return state.b;
+			
+		case 10:
+			return state.cc;
+			
+		case 11:
+			return state.dp;
+			
+		case 14:
+			return state.e;
+			
+		case 15:
+			return state.f;
+		}
+		
+		return 0;
+	}
+
+	private void setReg(int rr, int val) {
+		switch (rr) {
+		case 0:
+			state.setD(val);
+			break;
+			
+		case 1:
+			state.x = val;
+			break;
+			
+		case 2:
+			state.y = val;
+			break;
+			
+		case 3:
+			state.u = val;
+			break;
+			
+		case 4:
+			state.s = val;
+			break;
+			
+		case 5:
+			state.pc = val;
+			break;
+			
+		case 6:
+			state.setW(val);
+			break;
+			
+		case 7:
+			state.v = val;
+			break;
+			
+		case 8:
+			state.a = val;
+			break;
+			
+		case 9:
+			state.b = val;
+			break;
+			
+		case 10:
+			state.cc = val;
+			break;
+			
+		case 11:
+			state.dp = val;
+			break;
+			
+		case 14:
+			state.e = val;
+			break;
+			
+		case 15:
+			state.f = val;
+			break;
+		}
+	}
+	
+	private int calcEA() {
+		int postByte = state.instBuff[state.irByteCount];
+		int reg = ((postByte & 0x60) >> 5) + 1;
+		int regVal = getReg(reg);
+		int ea = 0;
+		
+		//_log.logInfo(String.format("calcEA: postByte=%02x, reg=%d, regVal=%04x\n", postByte, reg, regVal));
+		
+		// top bit clear is a simple 5bit offset
+		if ((state.pbByteCount == 1) && ((postByte & 0x80) == 0)) {
+			ea = regVal + sexVal(postByte & 0x1f, 5);
+		}
+		else {
+			// Inspect the bottom five bits to see what's going on
+			int indexMode = postByte & 0x1f;
+			
+			switch (indexMode) {
+			case 0x00:	// ,r+
+				ea = regVal+1;
+				setReg(reg, ea);
+				break;
+				
+			case 0x01:	// ,r++
+				ea = regVal+2;
+				setReg(reg, ea);
+				break;
+				
+			case 0x02:	// ,-r
+				ea = regVal-1;
+				setReg(reg, ea);
+				break;
+				
+			case 0x03:	// ,--r
+				ea = regVal-2;
+				setReg(reg, ea);
+				break;
+				
+			case 0x04:	// ,r
+				ea = regVal;
+				break;
+				
+			case 0x05:	// B,r
+				ea = regVal + sexByte(state.b);
+				break;
+				
+			case 0x06:	// A,r
+				ea = regVal + sexByte(state.a);
+				break;
+				
+			case 0x07:	// E,r
+				ea = regVal + sexByte(state.e);
+				break;
+				
+			case 0x0a:	// F,r
+				ea = regVal + sexByte(state.f);
+				break;
+				
+			case 0x0b:	// D,r
+				ea = regVal + sexWord(state.getD());
+				break;
+				
+			case 0x0e:	// W,r
+				ea = regVal + sexWord(state.getW());
+				break;
+				
+			case 0x11:	// [,r++]
+				ea = bus.getWord(regVal);
+				setReg(reg, regVal+2);
+				break;
+				
+			case 0x13:	// [,--r]
+				regVal = regVal - 2;
+				ea = bus.getWord(regVal);
+				setReg(reg, regVal);
+				break;
+				
+			case 0x14:	// [,r]
+				ea = bus.getWord(regVal);
+				break;
+				
+			case 0x15:	// [B,r]
+				ea = bus.getWord(regVal+sexByte(state.b));
+				break;
+				
+			case 0x16:	// [A,r]
+				ea = bus.getWord(regVal+sexByte(state.a));
+				break;
+				
+			case 0x17:	// [E,r]
+				ea = bus.getWord(regVal+sexByte(state.e));
+				break;
+				
+			case 0x1a:	// [F,r]
+				ea = bus.getWord(regVal+sexByte(state.f));
+				break;
+				
+			case 0x1b:	// [D,r]
+				ea = bus.getWord(regVal+sexWord(state.getD()));
+				break;
+				
+			case 0x1e:	// [W,r]
+				ea = bus.getWord(regVal+sexWord(state.getW()));
+				break;
+				
+			case 0x08:	// n8,r
+				ea = regVal + sexByte(state.pb & 0xff);
+				break;
+				
+			case 0x0c:	// n8,PCR
+				ea = state.pc + sexByte(state.pb & 0xff);
+				break;
+				
+			case 0x18:	// [n8,r]
+				ea = bus.getWord(regVal + sexByte(state.pb & 0xff));
+				break;
+				
+			case 0x1c:	// [n8,PCR]
+				ea = bus.getWord(state.pc + sexByte(state.pb & 0xff));
+				break;
+				
+			case 0x09:	// n16,r
+				ea = regVal + sexWord(state.pb & 0xffff);
+				break;
+				
+			case 0x0d:	// n16,PCR
+				ea = state.pc + sexWord(state.pb & 0xffff);
+				break;
+				
+			case 0x19:	// [n16,r]
+				ea = bus.getWord(regVal + sexWord(state.pb & 0xffff));
+				break;
+				
+			case 0x1d:	// [n16,PCR]
+				ea = bus.getWord(state.pc + sexWord(state.pb & 0xffff));
+				break;
+				
+			case 0x1f:	// [n16]
+				ea = bus.getWord(state.pb & 0xffff);
+				break;							
+			}
+		}
+		
+		return ea;
+	}
+	
+	private void executeInstruction() {
 		switch (state.ir) {
-			case 0x00:		// neg	$xxxx
-				ea = state.pb;
-				negInst(ea);
+			case 0x00:		// neg	<$xx
+				negInst((state.dp<<8) | state.pb);
+				break;
+				
+			case 0x03:		// com <$xx
+				comInst((state.dp<<8) | state.pb);
+				break;
+				
+			case 0x04:		// lsr <$xx
+				lsrInst((state.dp<<8) | state.pb);
+				break;
+				
+			case 0x12:		// nop
 				break;
 				
 			case 0x1c:		// andcc
 				state.cc &= state.pb;
 				break;
 				
+			case 0x1e:		// exg r,r
+				exgInst();
+				break;
+				
+			case 0x20:		// bra
+				state.pc = state.pc + sexByte(state.pb & 0xff);
+				break;
+				
+			case 0x26:		// bne
+				bneInst(state.pc + sexByte(state.pb & 0xff));
+				break;
+				
+			case 0x27:		// beq
+				beqInst(state.pc + sexByte(state.pb & 0xff));
+				break;
+				
+			case 0x30:		// leax
+				state.x = calcEA();				
+				state.setZ(state.x == 0);
+				break;
+				
+			case 0x31:		// leay
+				state.y = calcEA();				
+				state.setZ(state.y == 0);
+				break;
+				
+			case 0x39:		// rts
+				rtsInst();
+				break;
+				
 			case 0x86:		// lda #
-				ldaInst(state.pb);
+				state.a = ld8Inst(state.pb);
 				break;
 				
 			case 0x8e:		// ldx	#
@@ -991,17 +1314,23 @@ public class Cpu6x09 extends Cpu {
 				break;
 				
 			case 0xb7:		// sta $xxxx
-				ea = state.pb;
-				staInst(ea);
+				st8Inst(state.pb, state.a);
 				break;
 				
-			case 0xc6:	// ldb #
-				ldbInst(state.pb);
+			case 0xc6:		// ldb #
+				state.b = ld8Inst(state.pb);
 				break;
 				
-			case 0xf7:	// stb $xxxx
-				ea = state.pb;
-				stbInst(ea);
+			case 0xf7:		// stb $xxxx
+				st8Inst(state.pb, state.b);
+				break;
+				
+			case 0x1026:	// lbne
+				bneInst(state.pc + sexWord(state.pb & 0xffff));
+				break;
+				
+			case 0x1027:	// lbeq
+				beqInst(state.pc + sexWord(state.pb & 0xffff));
 				break;
 				
 			case 0x108e:	//ldy	#
@@ -1044,13 +1373,13 @@ public class Cpu6x09 extends Cpu {
 			noPrefix.add(new Instruction(0x02, "AIM",  0, Mode.IMMDIRECT, 0));
 			noPrefix.add(new Instruction(0x03, "COM",  0, Mode.DIRECT, 0));
 			noPrefix.add(new Instruction(0x04, "LSR",  0, Mode.DIRECT, 0));
-			noPrefix.add(new Instruction(0x05, "EIM",  0, Mode.DIRECT, 0));
+			noPrefix.add(new Instruction(0x05, "EIM",  0, Mode.IMMDIRECT, 0));
 			noPrefix.add(new Instruction(0x06, "ROR",  0, Mode.DIRECT, 0));
 			noPrefix.add(new Instruction(0x07, "ASR",  0, Mode.DIRECT, 0));
 			noPrefix.add(new Instruction(0x08, "ASL",  0, Mode.DIRECT, 0));
 			noPrefix.add(new Instruction(0x09, "ROL",  0, Mode.DIRECT, 0));
 			noPrefix.add(new Instruction(0x0a, "DEC",  0, Mode.DIRECT, 0));
-			noPrefix.add(new Instruction(0x0b, "TIM",  0, Mode.DIRECT, 0));
+			noPrefix.add(new Instruction(0x0b, "TIM",  0, Mode.IMMDIRECT, 0));
 			noPrefix.add(new Instruction(0x0c, "INC",  0, Mode.DIRECT, 0));
 			noPrefix.add(new Instruction(0x0d, "TST",  0, Mode.DIRECT, 0));
 			noPrefix.add(new Instruction(0x0e, "JMP",  0, Mode.DIRECT, 0));
