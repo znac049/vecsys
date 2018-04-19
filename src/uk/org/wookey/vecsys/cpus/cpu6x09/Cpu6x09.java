@@ -217,6 +217,9 @@ public class Cpu6x09 extends Cpu {
 			add(new TTLabel("U", headingColour), gbc);
 			gbc.right();
 			
+			add(new TTLabel("V", headingColour), gbc);
+			gbc.right();
+			
 			add(new TTLabel("DP", headingColour), gbc);
 			gbc.right();
 			
@@ -327,12 +330,12 @@ public class Cpu6x09 extends Cpu {
 				eReg.setText(String.format("%02x", state.a));
 				fReg.setText(String.format("%02x", state.b));
 			
-				vReg.setText(String.format("%04x",  state.v));
+				vReg.setText(String.format("%02x",  state.v));
 				xReg.setText(String.format("%04x", state.x));
 				yReg.setText(String.format("%04x", state.y));
 			
-				sReg.setText(String.format("%02x", state.s));
-				uReg.setText(String.format("%02x", state.u));
+				sReg.setText(String.format("%04x", state.s));
+				uReg.setText(String.format("%04x", state.u));
 			
 				ccReg.setText(String.format("%02x", state.cc));
 				ccStr.setText(ccString());
@@ -518,7 +521,6 @@ public class Cpu6x09 extends Cpu {
 							break;
 							
 						}
-						res += String.format("INDEXED mode: %02x", mode);						
 					}
 					
 				}
@@ -1184,6 +1186,19 @@ public class Cpu6x09 extends Cpu {
 		bus.setByte(addr, val);
 	}
 	
+	private int lsl8Inst(int val) {
+		int msb = val & 0x80;
+		
+		state.setC(msb);
+		
+		val = val << 1;
+		state.setStdFlags(val);
+
+		// deal with the V flag (sign has changed)
+		state.setV(msb != (val & 0x80));
+		return val;
+	}
+	
 	private void rorInst(int addr) {
 		int val = bus.getByte(addr);
 		
@@ -1209,6 +1224,16 @@ public class Cpu6x09 extends Cpu {
 		// CC flags
 		state.setStdFlags(val);
 		state.cc &= ~CpuState.CC_V;
+	}
+	
+	private int eorInst(int val1, int val2) {
+		val1 = val1 ^ val2;
+		
+		// CC flags
+		state.setStdFlags(val1);
+		state.cc &= ~CpuState.CC_V;
+		
+		return val1;
 	}
 	
 	private void ldxInst(int val) {
@@ -1252,6 +1277,13 @@ public class Cpu6x09 extends Cpu {
 		
 		setReg(r1, getReg(r2));
 		setReg(r2, regVal);
+	}
+	
+	private void tfrInst() {
+		int r1 = (state.pb >> 4) & 0x0f;
+		int r2 = state.pb & 0x0f;
+		
+		setReg(r2, getReg(r1));
 	}
 	
 	private void bsrInst(int target) {
@@ -1298,6 +1330,10 @@ public class Cpu6x09 extends Cpu {
 				exgInst();
 				break;
 				
+			case 0x1f:		// tfr r,r
+				tfrInst();
+				break;
+				
 			case 0x20:		// bra
 				state.pc = state.pc + sexByte(state.pb & 0xff);
 				break;
@@ -1324,6 +1360,10 @@ public class Cpu6x09 extends Cpu {
 				rtsInst();
 				break;
 				
+			case 0x58:		// lslb
+				state.b = lsl8Inst(state.b);
+				break;
+				
 			case 0x86:		// lda #
 				state.a = ld8Inst(state.pb);
 				break;
@@ -1336,12 +1376,20 @@ public class Cpu6x09 extends Cpu {
 				ldxInst(state.pb);
 				break;
 				
+			case 0xa8:		// eora indexed
+				state.a = eorInst(state.a, bus.getByte(calcEA()));
+				break;
+				
 			case 0xb7:		// sta $xxxx
 				st8Inst(state.pb, state.a);
 				break;
 				
 			case 0xc6:		// ldb #
 				state.b = ld8Inst(state.pb);
+				break;
+				
+			case 0xe7:		// stb indexed
+				st8Inst(calcEA(), state.b);
 				break;
 				
 			case 0xf7:		// stb $xxxx
@@ -1356,8 +1404,12 @@ public class Cpu6x09 extends Cpu {
 				beqInst(state.pc + sexWord(state.pb & 0xffff));
 				break;
 				
-			case 0x108e:	//ldy	#
+			case 0x108e:	// ldy	#
 				ldyInst(state.pb);
+				break;
+				
+			case 0x10ce:	// lds #
+				state.s = ld8Inst(state.pb);
 				break;
 				
 			default:

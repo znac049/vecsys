@@ -182,8 +182,8 @@ public class AsteroidsDeluxe extends Emulator {
 	
 	private void createDevices() throws IOException, RangeException {
 		gameRom = new MemoryDevice(8192);
-		//gameRom.loadFile("Code/ad-v3.bin", 0);
-		gameRom.loadFile("Code/test-noram.bin", 0);
+		gameRom.loadFile("Code/ad-v3.bin", 0);
+		//gameRom.loadFile("Code/test-noram.bin", 0);
 		gameRom.setWriteable(false);
 		gameRom.setName("Game ROM");
 		bus.attach(0x6000, 0x7fff, gameRom);
