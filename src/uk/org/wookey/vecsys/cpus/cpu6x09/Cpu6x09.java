@@ -867,140 +867,6 @@ public class Cpu6x09 extends Cpu {
 		}
 	}
 
-	private int sexVal(int b, int bits) {
-		int mask = 1 << (bits-1);
-		int negBits = -mask;
-		
-		if ((b & mask) != 0) {
-			b |= negBits;
-		}
-		
-		return b;
-	}
-	
-	private int sexByte(int b) {
-		return sexVal(b, 8);
-	}
-	
-	private int sexWord(int b) {
-		return sexVal(b, 16);
-	}
-	
-	private void negInst(int addr) {
-		int val = bus.getByte(addr);
-
-		// Special case - $80 (-128) won't fit into 8 bits when negated
-		if ((val & 0x80) != 0) {
-			state.cc |= CpuState.CC_V;
-		}
-		else {
-			state.cc &= ~CpuState.CC_V;
-		}
-
-		// Special case - negating zero will yield 0
-		if (val == 0) {
-			state.cc &= ~CpuState.CC_C;
-		}
-		else {
-			state.cc |= CpuState.CC_C;
-		}
-		
-		val = (-sexByte(val)) & 0xff;
-		state.setStdFlags(val);
-		
-		bus.setByte(addr, val);
-	}
-	
-	private void comInst(int addr) {
-		int val = ~bus.getByte(addr);
-		
-		state.setStdFlags(val);
-		state.cc &= ~CpuState.CC_V;
-		
-		bus.setByte(addr, val);
-	}
-	
-	private void lsrInst(int addr) {
-		int val = bus.getByte(addr);
-		
-		state.setC(val & 0x01);
-		val = val >> 1;
-		state.setStdFlags(val);
-		state.setV(0);
-		
-		bus.setByte(addr, val);
-	}
-	
-	private void rorInst(int addr) {
-		int val = bus.getByte(addr);
-		
-		state.setC(val & 0x01);
-		val = val >> 1;
-		state.setStdFlags(val);
-		state.setV(0);
-		
-		bus.setByte(addr, val);
-	}
-	
-	private int ld8Inst(int val) {
-		// CC flags
-		state.setStdFlags(val);
-		state.setV(0);
-		
-		return val;
-	}
-	
-	private void st8Inst(int addr, int val) {
-		 bus.setByte(addr, val);
-		
-		// CC flags
-		state.setStdFlags(val);
-		state.cc &= ~CpuState.CC_V;
-	}
-	
-	private void ldxInst(int val) {
-		state.x = val;
-		
-		// CC flags
-		state.setStdFlags(val);
-		state.cc &= ~CpuState.CC_V;
-	}
-	
-	private void ldyInst(int val) {
-		state.y = val;
-		
-		// CC flags
-		state.setStdFlags(val);
-		state.cc &= ~CpuState.CC_V;
-	}
-	
-	private void bneInst(int addr) {
-		if ((state.cc & CpuState.CC_Z) == 0) {
-			state.pc = addr;
-		}
-	}
-	
-	private void beqInst(int addr) {
-		if ((state.cc & CpuState.CC_Z) != 0) {
-			state.pc = addr;
-		}
-	}
-	
-	private void rtsInst() {
-		state.pc = bus.getWord(state.s);
-		state.s = (state.s + 2) & 0xffff;
-	}
-	
-	private void exgInst() {
-		int r1 = (state.pb >> 4) & 0x0f;
-		int r2 = state.pb & 0x0f;
-		
-		int regVal = getReg(r1);
-		
-		setReg(r1, getReg(r2));
-		setReg(r2, regVal);
-	}
-	
 	private int getReg(int rr) {
 		switch (rr) {
 		case 0:
@@ -1254,6 +1120,151 @@ public class Cpu6x09 extends Cpu {
 		return ea;
 	}
 	
+	private int sexVal(int b, int bits) {
+		int mask = 1 << (bits-1);
+		int negBits = -mask;
+		
+		if ((b & mask) != 0) {
+			b |= negBits;
+		}
+		
+		return b;
+	}
+	
+	private int sexByte(int b) {
+		return sexVal(b, 8);
+	}
+	
+	private int sexWord(int b) {
+		return sexVal(b, 16);
+	}
+	
+	private void negInst(int addr) {
+		int val = bus.getByte(addr);
+
+		// Special case - $80 (-128) won't fit into 8 bits when negated
+		if ((val & 0x80) != 0) {
+			state.cc |= CpuState.CC_V;
+		}
+		else {
+			state.cc &= ~CpuState.CC_V;
+		}
+
+		// Special case - negating zero will yield 0
+		if (val == 0) {
+			state.cc &= ~CpuState.CC_C;
+		}
+		else {
+			state.cc |= CpuState.CC_C;
+		}
+		
+		val = (-sexByte(val)) & 0xff;
+		state.setStdFlags(val);
+		
+		bus.setByte(addr, val);
+	}
+	
+	private void comInst(int addr) {
+		int val = ~bus.getByte(addr);
+		
+		state.setStdFlags(val);
+		state.cc &= ~CpuState.CC_V;
+		
+		bus.setByte(addr, val);
+	}
+	
+	private void lsrInst(int addr) {
+		int val = bus.getByte(addr);
+		
+		state.setC(val & 0x01);
+		val = val >> 1;
+		state.setStdFlags(val);
+		state.setV(0);
+		
+		bus.setByte(addr, val);
+	}
+	
+	private void rorInst(int addr) {
+		int val = bus.getByte(addr);
+		
+		state.setC(val & 0x01);
+		val = val >> 1;
+		state.setStdFlags(val);
+		state.setV(0);
+		
+		bus.setByte(addr, val);
+	}
+	
+	private int ld8Inst(int val) {
+		// CC flags
+		state.setStdFlags(val);
+		state.setV(0);
+		
+		return val;
+	}
+	
+	private void st8Inst(int addr, int val) {
+		 bus.setByte(addr, val);
+		
+		// CC flags
+		state.setStdFlags(val);
+		state.cc &= ~CpuState.CC_V;
+	}
+	
+	private void ldxInst(int val) {
+		state.x = val;
+		
+		// CC flags
+		state.setStdFlags(val);
+		state.cc &= ~CpuState.CC_V;
+	}
+	
+	private void ldyInst(int val) {
+		state.y = val;
+		
+		// CC flags
+		state.setStdFlags(val);
+		state.cc &= ~CpuState.CC_V;
+	}
+	
+	private void bneInst(int addr) {
+		if ((state.cc & CpuState.CC_Z) == 0) {
+			state.pc = addr;
+		}
+	}
+	
+	private void beqInst(int addr) {
+		if ((state.cc & CpuState.CC_Z) != 0) {
+			state.pc = addr;
+		}
+	}
+	
+	private void rtsInst() {
+		state.pc = bus.getWord(state.s);
+		state.s = (state.s + 2) & 0xffff;
+	}
+	
+	private void exgInst() {
+		int r1 = (state.pb >> 4) & 0x0f;
+		int r2 = state.pb & 0x0f;
+		
+		int regVal = getReg(r1);
+		
+		setReg(r1, getReg(r2));
+		setReg(r2, regVal);
+	}
+	
+	private void bsrInst(int target) {
+		state.s = state.s - 2;
+		try {
+			bus.setWord(state.s,  state.pc);
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		state.pc = target;
+	}
+	
 	private void executeInstruction() {
 		switch (state.ir) {
 			case 0x00:		// neg	<$xx
@@ -1269,6 +1280,14 @@ public class Cpu6x09 extends Cpu {
 				break;
 				
 			case 0x12:		// nop
+				break;
+				
+			case 0x16:		// lbra
+				state.pc = state.pc + sexWord(state.pb & 0xffff);
+				break;
+				
+			case 0x17:		// lbsr
+				bsrInst(state.pb);
 				break;
 				
 			case 0x1c:		// andcc
@@ -1307,6 +1326,10 @@ public class Cpu6x09 extends Cpu {
 				
 			case 0x86:		// lda #
 				state.a = ld8Inst(state.pb);
+				break;
+				
+			case 0x8d:		// bsr
+				bsrInst(state.pb);
 				break;
 				
 			case 0x8e:		// ldx	#

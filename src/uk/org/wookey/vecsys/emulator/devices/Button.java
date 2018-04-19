@@ -1,5 +1,6 @@
 package uk.org.wookey.vecsys.emulator.devices;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
@@ -23,11 +24,16 @@ public class Button extends Device {
 	private RoundButton button;
 	private String name;
 	private int boundKey;
+	
+	private Dimension buttonSize = new Dimension(50, 50);
 
 	public Button(String devName, int onVal, int offVal, int key) {
 		super(devName + " button");
 		
 		button = new RoundButton(devName);
+		button.setMinimumSize(buttonSize);
+		button.setPreferredSize(buttonSize);
+		button.setMaximumSize(buttonSize);
 		
 		this.onVal = onVal;
 		this.offVal = offVal;

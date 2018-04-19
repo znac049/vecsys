@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.prefs.Preferences;
 
 import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
@@ -142,42 +143,41 @@ public class AsteroidsDeluxe extends Emulator {
 		controlPanel = new JPanel();
 		final TitledBorder tb = BorderFactory.createTitledBorder("Controls");
 		controlPanel.setBorder(tb);
-		controlPanel.setMinimumSize(new Dimension(200, 50));
 		controlPanel.setLayout(new GridBagLayout());
 
 		// Top row - player 1 and 2 buttons/leds
-		gbc.gridwidth = 2;
-		gbc.anchor = GridBagConstraints.LINE_START;
-		controlPanel.add(playerButtons.getWidget(), gbc);
+		GridBagStrip row1 = new GridBagStrip();
+		row1.append(playerButtons.getWidget());
+		row1.eol();
+
+		controlPanel.add(row1, gbc);
 		gbc.nl();
 		
 		// 2nd row - 4 game buttons
-		gbc.gridwidth = 1;
-		controlPanel.add(leftButton.getWidget(),  gbc);
-		gbc.right();
+		GridBagStrip row2 = new GridBagStrip();
+		row2.append(leftButton.getWidget());
+		row2.append(rightButton.getWidget());
+		row2.append(fireButton.getWidget());
+		row2.append(thrustButton.getWidget());
+		row2.eol();
 		
-		controlPanel.add(rightButton.getWidget(),  gbc);
-		gbc.right();
-		gbc.right();
-		
-		controlPanel.add(fireButton.getWidget(), gbc);
-		gbc.right();
-		
-		controlPanel.add(thrustButton.getWidget(), gbc);
+		controlPanel.add(row2, gbc);
 		gbc.nl();
 		
 		// 3rd row - shields button
-		gbc.gridx = 2;
-		controlPanel.add(shieldButton.getWidget(), gbc);		
+		GridBagStrip row3 = new GridBagStrip();
+		row3.append(shieldButton.getWidget());
+		row3.eol();
+
+		controlPanel.add(row3, gbc);
 		gbc.nl();
-		
+
 		// Bottom row - coin door
-		gbc.right();
-		gbc.anchor = GridBagConstraints.CENTER;
-		gbc.weightx = 0.0;
-		gbc.gridwidth = 3;
+		GridBagStrip row4 = new GridBagStrip();
+		row4.append(coinDoor.getWidget());
+		row4.eol();
 		
-		controlPanel.add(coinDoor.getWidget(), gbc);		
+		controlPanel.add(row4, gbc);
 	}
 	
 	private void createDevices() throws IOException, RangeException {
