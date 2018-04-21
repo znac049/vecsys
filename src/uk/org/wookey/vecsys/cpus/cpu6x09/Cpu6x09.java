@@ -21,6 +21,8 @@ public class Cpu6x09 extends Cpu {
 	private static Logger _log = new Logger("6x09");
 
     public static final int RESET_VEC = 0xfffe;
+    public static final int SWI_VEC = 0xfffa;
+    public static final int SWI2_VEC = 0xfff4;
 
 	private CpuState state;
 	private StatusPanel statusPanel;
@@ -64,6 +66,8 @@ public class Cpu6x09 extends Cpu {
 		
 		public int cc;
 		
+		public boolean nativeMode;
+		
 		public int startAddress;
 		public int instByteCount;
 		public int instBuff[];
@@ -88,6 +92,8 @@ public class Cpu6x09 extends Cpu {
 			dp = 0;
 			v = 0;
 			cc = 0x50;
+			
+			nativeMode = false;
 		}
 		
 		public int getD() {
@@ -141,6 +147,10 @@ public class Cpu6x09 extends Cpu {
 			}
 		}
 		
+		public int getZ() {
+			return ((state.cc & CpuState.CC_Z) == 0)?0:1;
+		}
+		
 		public void setN(boolean nFlag) {
 			setN(nFlag?1:0);
 		}
@@ -152,6 +162,10 @@ public class Cpu6x09 extends Cpu {
 			else {
 				state.cc &= ~CpuState.CC_N;
 			}
+		}
+		
+		public int getN() {
+			return ((state.cc & CpuState.CC_N) == 0)?0:1;
 		}
 		
 		public void setV(boolean vFlag) {
@@ -167,6 +181,10 @@ public class Cpu6x09 extends Cpu {
 			}
 		}
 		
+		public int getV() {
+			return ((state.cc & CpuState.CC_V) == 0)?0:1;
+		}
+		
 		public void setC(boolean cFlag) {
 			setC(cFlag?1:0);
 		}
@@ -180,6 +198,60 @@ public class Cpu6x09 extends Cpu {
 			}
 		}
 
+		public int getC() {
+			return ((state.cc & CpuState.CC_C) == 0)?0:1;
+		}
+		
+		public void setE(boolean eFlag) {
+			setE(eFlag?1:0);
+		}
+
+		public void setE(int val) {
+			if (val != 0) {
+				state.cc |= CpuState.CC_E;
+			}
+			else {
+				state.cc &= ~CpuState.CC_E;
+			}
+		}
+
+		public int getE() {
+			return ((state.cc & CpuState.CC_E) == 0)?0:1;
+		}
+		
+		public void setF(boolean fFlag) {
+			setF(fFlag?1:0);
+		}
+
+		public void setF(int val) {
+			if (val != 0) {
+				state.cc |= CpuState.CC_F;
+			}
+			else {
+				state.cc &= ~CpuState.CC_F;
+			}
+		}
+
+		public int getf() {
+			return ((state.cc & CpuState.CC_I) == 0)?0:1;
+		}
+		
+		public void setI(boolean iFlag) {
+			setC(iFlag?1:0);
+		}
+
+		public void setI(int val) {
+			if (val != 0) {
+				state.cc |= CpuState.CC_I;
+			}
+			else {
+				state.cc &= ~CpuState.CC_I;
+			}
+		}
+
+		public int getI() {
+			return ((state.cc & CpuState.CC_I) == 0)?0:1;
+		}
 	}
 	
 	public class StatusPanel extends BaseStatusPanel {
@@ -1272,6 +1344,24 @@ public class Cpu6x09 extends Cpu {
 		state.s = (state.s + 2) & 0xffff;
 	}
 	
+	private void rtiInst() {
+		int sp = state.s;
+		
+		state.cc = bus.getByte(sp++);
+		
+		if (state.getE() == 1) {
+			if (state.nativeMode) {
+				state.s = pulInst(state.s, true, 0xff, true);				
+			}
+			else {
+				state.s = pulInst(state.s, true, 0xff, false);
+			}
+		}
+		else {
+			state.s = pulInst(state.s, true, 0x80, false);
+		}
+	}
+	
 	private void exgInst() {
 		int r1 = (state.pb >> 4) & 0x0f;
 		int r2 = state.pb & 0x0f;
@@ -1316,13 +1406,131 @@ public class Cpu6x09 extends Cpu {
 		state.setV((val & mask) != val);
 	}
 	
+	private int pushWord(int sp, int val) {
+		sp = sp - 2;
+		try {
+			bus.setWord(sp,  val);
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return sp;
+	}
+	
+	private int pushByte(int sp, int val) {
+		sp = sp - 1;
+		bus.setByte(sp,  val);
+		
+		return sp;
+	}
+	
+	private void pushAll() {
+		state.s = pushInst(state.s, state.u, 0xff, state.nativeMode);
+	}
+	
+	private int pushInst(int sp, int su, int regs) {
+		return pushInst(sp, su, regs, false);
+	}
+	
+	private int pushInst(int sp, int su, int regs, boolean isNative) {
+		if ((regs & 0x80) != 0) {
+			sp = pushWord(sp, state.pc);
+		}
+		
+		if ((regs & 0x40) != 0) {
+			sp = pushWord(sp, su);
+		}
+		
+		if ((regs & 0x20) != 0) {
+			sp = pushWord(sp, state.y);
+		}
+		
+		if ((regs & 0x10) != 0) {
+			sp = pushWord(sp, state.x);
+		}
+		
+		if ((regs & 0x08) != 0) {
+			sp = pushByte(sp, state.dp);
+		}
+		
+		if (isNative) {
+			sp = pushByte(sp, state.f);
+			sp = pushByte(sp, state.e);
+		}
+		
+		if ((regs & 0x04) != 0) {
+			sp = pushByte(sp, state.b);
+		}
+		
+		if ((regs & 0x02) != 0) {
+			sp = pushByte(sp, state.a);
+		}
+		
+		if ((regs & 0x01) != 0) {
+			sp = pushByte(sp, state.cc);
+		}
+		
+		return sp;
+	}
+	
+	private int pulInst(int sp, boolean systemStack, int regs, boolean isNative) {
+		if ((regs & 0x01) != 0) {
+			state.cc = bus.getByte(sp++);
+		}
+		
+		if ((regs & 0x02) != 0) {
+			state.a = bus.getByte(sp++);
+		}
+		
+		if ((regs & 0x04) != 0) {
+			state.b = bus.getByte(sp++);
+		}
+		
+		if (isNative) {
+			state.e = bus.getByte(sp++);
+			state.f = bus.getByte(sp++);
+		}
+		
+		if ((regs & 0x08) != 0) {
+			state.dp = bus.getByte(sp++);
+		}
+		
+		if ((regs & 0x10) != 0) {
+			state.x = bus.getWord(sp);
+			sp += 2;
+		}
+		
+		if ((regs & 0x20) != 0) {
+			state.y = bus.getWord(sp);
+			sp += 2;
+		}
+		
+		if ((regs & 0x40) != 0) {
+			if (systemStack) {
+				state.u = bus.getWord(sp);
+			}
+			else {
+				state.s = bus.getWord(sp);
+			}
+			sp += 2;
+		}
+		
+		if ((regs & 0x80) != 0) {
+			state.pc = bus.getWord(sp);
+			sp += 2;
+		}
+		
+		return sp;
+	}
+	
 	private void executeInstruction() {
 		switch (state.ir) {
 			case 0x00:		// neg	<$xx
 			{
 				int addr = (state.dp<<8) | state.pb;
 				
-				bus.setByte(bus.getByte(addr), negInst(addr, true));
+				bus.setByte(addr, negInst(bus.getByte(addr), true));
 			}
 			break;
 				
@@ -1353,6 +1561,15 @@ public class Cpu6x09 extends Cpu {
 			case 0x12:		// nop
 				break;
 				
+			case 0x14:		// sexw
+				if ((state.f & 0x80) != 0) {
+					state.e = 0xff;
+				}
+				else {
+					state.e = 0;
+				}
+				break;
+				
 			case 0x16:		// lbra
 				state.pc = state.pc + sexWord(state.pb);
 				break;
@@ -1367,6 +1584,15 @@ public class Cpu6x09 extends Cpu {
 				
 			case 0x1c:		// andcc
 				state.cc &= state.pb;
+				break;
+				
+			case 0x1d:		// sex
+				if ((state.b & 0x80) != 0) {
+					state.a = 0xff;
+				}
+				else {
+					state.a = 0;
+				}
 				break;
 				
 			case 0x1e:		// exg r,r
@@ -1425,6 +1651,22 @@ public class Cpu6x09 extends Cpu {
 				branchIfInst(state.pb, (state.cc & CpuState.CC_N) != 0, true);
 				break;
 				
+			case 0x2c:		// bge
+				branchIfInst(state.pb, (state.getN() == state.getV()), true);
+				break;
+				
+			case 0x2d:		// blt
+				branchIfInst(state.pb, (state.getN() != state.getV()), true);
+				break;
+				
+			case 0x2e:		// bgt
+				branchIfInst(state.pb, (state.getN() == state.getV()) && (state.getV() == 0), true);
+				break;
+				
+			case 0x2f:		// ble
+				branchIfInst(state.pb, (state.getN() != state.getV()) || (state.getZ() == 0), true);
+				break;
+				
 			case 0x30:		// leax
 				state.x = calcEA();				
 				state.setZ(state.x == 0);
@@ -1443,8 +1685,32 @@ public class Cpu6x09 extends Cpu {
 				state.u = calcEA();				
 				break;
 				
+			case 0x34:		// pshs
+				state.s = pushInst(state.s, state.u, state.pb);
+				break;
+				
+			case 0x35:		// puls
+				state.s = pulInst(state.s, true, state.pb, false);
+				break;
+				
+			case 0x36:		// pshu
+				state.u = pushInst(state.u, state.s, state.pb, false);
+				break;
+				
+			case 0x37:		// pulu
+				state.u = pulInst(state.u, false, state.pb, false);
+				break;
+				
 			case 0x39:		// rts
 				rtsInst();
+				break;
+				
+			case 0x3f:		// swi
+				state.setE(1);
+				pushAll();
+				state.setF(1);
+				state.setI(1);
+				state.pc = bus.getWord(SWI_VEC);
 				break;
 				
 			case 0x40:		// nega
@@ -1457,6 +1723,34 @@ public class Cpu6x09 extends Cpu {
 				
 			case 0x58:		// lslb
 				state.b = lslInst(state.b, true);
+				break;
+				
+			case 0x60:		// neg indexed
+				{
+					int addr = calcEA();
+				
+					bus.setByte(addr, negInst(bus.getByte(addr), true));
+				}
+				break;
+				
+			case 0x63:		// com indexed
+				comInst(calcEA(), true);
+				break;
+				
+			case 0x64:		// lsr indexed
+				lsrInst(calcEA(), true);
+				break;
+				
+			case 0x6a:		// dec indexed
+				addInst(calcEA(), -1, true);
+				break;
+				
+			case 0x6c:		// inc indexed
+				addInst(calcEA(), 1, true);
+				break;
+				
+			case 0x6e:		// jmp indexed
+				state.pc = calcEA();
 				break;
 				
 			case 0x86:		// lda #
