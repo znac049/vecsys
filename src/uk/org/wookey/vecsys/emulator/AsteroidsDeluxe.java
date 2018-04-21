@@ -119,22 +119,22 @@ public class AsteroidsDeluxe extends Emulator {
 		configPanel.setMinimumSize(new Dimension(300, 100));
 		configPanel.setLayout(new GridBagLayout());
 
-		configPanel.add(selfTest.getWidget(), gbc);
-		gbc.right();
-		
-		configPanel.add(optionSwitches.getWidget(), gbc);		
-		gbc.right();
-		
-		configPanel.add(slamSwitch.getWidget());
+		GridBagStrip row1 = new GridBagStrip();
+		row1.append(selfTest.getWidget());
+		row1.append(optionSwitches.getWidget());
+		row1.append(slamSwitch.getWidget());
+		row1.eol();
+
+		configPanel.add(row1, gbc);
 		gbc.nl();
-		
-		configPanel.add(coinCounters.getWidget(0), gbc);
-		gbc.right();
-		
-		configPanel.add(coinCounters.getWidget(1), gbc);
-		gbc.right();
-		
-		configPanel.add(coinCounters.getWidget(2), gbc);
+				
+		GridBagStrip row2 = new GridBagStrip();
+		row2.append(coinCounters.getWidget(0));
+		row2.append(coinCounters.getWidget(1));
+		row2.append(coinCounters.getWidget(2));
+		row2.eol();
+
+		configPanel.add(row2, gbc);
 	}
 	
 	private void buildControlPanel() {
