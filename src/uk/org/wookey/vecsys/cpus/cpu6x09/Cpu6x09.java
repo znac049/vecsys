@@ -6,6 +6,8 @@ import java.awt.GridBagConstraints;
 
 import javax.swing.JPanel;
 
+import com.sun.xml.internal.ws.util.xml.XMLReaderComposite.State;
+
 import uk.org.wookey.vecsys.cpus.Cpu;
 import uk.org.wookey.vecsys.cpus.InstructionTable;
 import uk.org.wookey.vecsys.cpus.BaseStatusPanel;
@@ -106,8 +108,8 @@ public class Cpu6x09 extends Cpu {
 			state.e = (val >> 8) & 0xff;
 		}
 		
-		public void setStdFlags(int val) {
-			if ((val & 0x80) != 0) {
+		public void setStdFlags(int val, int negMask) {
+			if ((val & negMask) != 0) {
 				state.cc |= CC_N;
 			}
 			else {
@@ -120,6 +122,10 @@ public class Cpu6x09 extends Cpu {
 			else {
 				state.cc &= ~CC_Z;
 			}
+		}
+		
+		public void setStdFlags(int val, boolean isByte) {
+			setStdFlags(val, isByte?0x80:0x8000);
 		}
 		
 		public void setZ(boolean zFlag) {
@@ -1134,18 +1140,19 @@ public class Cpu6x09 extends Cpu {
 	}
 	
 	private int sexByte(int b) {
-		return sexVal(b, 8);
+		return sexVal(b & 0xff, 8);
 	}
 	
-	private int sexWord(int b) {
-		return sexVal(b, 16);
+	private int sexWord(int w) {
+		return sexVal(w & 0xffff, 16);
 	}
 	
-	private void negInst(int addr) {
-		int val = bus.getByte(addr);
+	private int negInst(int val, boolean isByte) {
+		int negMask = isByte?0x80:0x8000;
+		int mask = isByte?0xff:0xffff;
 
-		// Special case - $80 (-128) won't fit into 8 bits when negated
-		if ((val & 0x80) != 0) {
+		// Special case - $80 (-128) won't fit into 8 bits when negated; similarly for 16 bits
+		if ((val & negMask) != 0) {
 			state.cc |= CpuState.CC_V;
 		}
 		else {
@@ -1160,110 +1167,106 @@ public class Cpu6x09 extends Cpu {
 			state.cc |= CpuState.CC_C;
 		}
 		
-		val = (-sexByte(val)) & 0xff;
-		state.setStdFlags(val);
+		val = (isByte?sexByte(val):sexWord(val));
+		val = (-val) & mask;
+		state.setStdFlags(val, negMask);
 		
-		bus.setByte(addr, val);
+		return val;
 	}
 	
-	private void comInst(int addr) {
-		int val = ~bus.getByte(addr);
+	private void comInst(int addr, boolean isByte) {
+		int val = isByte?bus.getByte(addr):bus.getWord(addr);
 		
-		state.setStdFlags(val);
+		val = ~val;
+		
+		state.setStdFlags(val, isByte);
 		state.cc &= ~CpuState.CC_V;
 		
 		bus.setByte(addr, val);
 	}
 	
-	private void lsrInst(int addr) {
+	private int subInst(int val, int subval, boolean isByte) {
+		int mask = isByte?0xff:0xffff;
+		
+		val = sexWord(val) - sexWord(subval);
+		
+		int tmp = val & mask;
+		state.setStdFlags(tmp, isByte);
+		state.setV(val != tmp);
+		// TODO: Set carry flag if necessary
+		
+		return tmp;
+	}
+	
+	private void lsrInst(int addr, boolean isByte) {
 		int val = bus.getByte(addr);
 		
 		state.setC(val & 0x01);
 		val = val >> 1;
-		state.setStdFlags(val);
+		state.setStdFlags(val, isByte);
 		state.setV(0);
 		
 		bus.setByte(addr, val);
 	}
 	
-	private int lsl8Inst(int val) {
-		int msb = val & 0x80;
+	private int lslInst(int val, boolean isByte) {
+		int msbMask = isByte?0xff:0xffff;
+		int msb = val & msbMask;
 		
 		state.setC(msb);
 		
 		val = val << 1;
-		state.setStdFlags(val);
+		state.setStdFlags(val, isByte);
 
 		// deal with the V flag (sign has changed)
-		state.setV(msb != (val & 0x80));
+		state.setV(msb != (val & msbMask));
 		return val;
 	}
 	
-	private void rorInst(int addr) {
-		int val = bus.getByte(addr);
-		
-		state.setC(val & 0x01);
-		val = val >> 1;
-		state.setStdFlags(val);
-		state.setV(0);
-		
-		bus.setByte(addr, val);
-	}
-	
-	private int ld8Inst(int val) {
+	private int ldInst(int val, boolean isByte) {
 		// CC flags
-		state.setStdFlags(val);
+		state.setStdFlags(val, isByte);
 		state.setV(0);
 		
 		return val;
 	}
 	
-	private void st8Inst(int addr, int val) {
-		 bus.setByte(addr, val);
+	private void stInst(int addr, int val, boolean isByte) {
+		if (isByte) {
+			bus.setByte(addr, val);
+		}
+		else {
+			try {
+				bus.setWord(addr, val);
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		
 		// CC flags
-		state.setStdFlags(val);
-		state.cc &= ~CpuState.CC_V;
+		state.setStdFlags(val, isByte);
+		state.setV(0);
 	}
 	
-	private int eorInst(int val1, int val2) {
+	private int eorInst(int val1, int val2, boolean isByte) {
 		val1 = val1 ^ val2;
 		
 		// CC flags
-		state.setStdFlags(val1);
+		state.setStdFlags(val1, isByte);
 		state.cc &= ~CpuState.CC_V;
 		
 		return val1;
 	}
-	
-	private void ldxInst(int val) {
-		state.x = val;
+
+	private void branchIfInst(int offset, boolean doBranch, boolean isByte) {
+		int sexed = isByte?sexByte(offset):sexWord(offset);
 		
-		// CC flags
-		state.setStdFlags(val);
-		state.cc &= ~CpuState.CC_V;
-	}
-	
-	private void ldyInst(int val) {
-		state.y = val;
-		
-		// CC flags
-		state.setStdFlags(val);
-		state.cc &= ~CpuState.CC_V;
-	}
-	
-	private void bneInst(int addr) {
-		if ((state.cc & CpuState.CC_Z) == 0) {
-			state.pc = addr;
+		if (doBranch) {
+			state.pc = state.pc + sexed;
 		}
 	}
-	
-	private void beqInst(int addr) {
-		if ((state.cc & CpuState.CC_Z) != 0) {
-			state.pc = addr;
-		}
-	}
-	
+
 	private void rtsInst() {
 		state.pc = bus.getWord(state.s);
 		state.s = (state.s + 2) & 0xffff;
@@ -1297,29 +1300,69 @@ public class Cpu6x09 extends Cpu {
 		state.pc = target;
 	}
 	
+	private void clrInst(int addr, boolean isByte) {
+		bus.setByte(addr, 0);
+		state.setStdFlags(0, true);
+		state.setV(0);
+		state.setC(0);		
+	}
+	
+	private void addInst(int addr, int amount, boolean isByte) {
+		int val = bus.getByte(addr) + (isByte?sexByte(amount):sexWord(amount));
+		int mask = isByte?0xff:0xffff;
+		
+		bus.setByte(addr, val);
+		state.setStdFlags(val, true);
+		state.setV((val & mask) != val);
+	}
+	
 	private void executeInstruction() {
 		switch (state.ir) {
 			case 0x00:		// neg	<$xx
-				negInst((state.dp<<8) | state.pb);
-				break;
+			{
+				int addr = (state.dp<<8) | state.pb;
+				
+				bus.setByte(bus.getByte(addr), negInst(addr, true));
+			}
+			break;
 				
 			case 0x03:		// com <$xx
-				comInst((state.dp<<8) | state.pb);
+				comInst((state.dp<<8) | state.pb, true);
 				break;
 				
 			case 0x04:		// lsr <$xx
-				lsrInst((state.dp<<8) | state.pb);
+				lsrInst((state.dp<<8) | state.pb, true);
+				break;
+				
+			case 0x0a:		// dec <$xx
+				addInst((state.dp<<8) | state.pb, -1, true);
+				break;
+				
+			case 0x0c:		// inc <$xx
+				addInst((state.dp<<8) | state.pb, 1, true);
+				break;
+				
+			case 0x0e:		// jmp <$xx
+				state.pc = (state.dp<<8) | state.pb;
+				break;
+				
+			case 0x0f:		// clr <$xx
+				clrInst((state.dp<<8) | state.pb, true);
 				break;
 				
 			case 0x12:		// nop
 				break;
 				
 			case 0x16:		// lbra
-				state.pc = state.pc + sexWord(state.pb & 0xffff);
+				state.pc = state.pc + sexWord(state.pb);
 				break;
 				
 			case 0x17:		// lbsr
 				bsrInst(state.pb);
+				break;
+				
+			case 0x1a:		// orcc
+				state.cc |= state.pb;
 				break;
 				
 			case 0x1c:		// andcc
@@ -1335,15 +1378,51 @@ public class Cpu6x09 extends Cpu {
 				break;
 				
 			case 0x20:		// bra
-				state.pc = state.pc + sexByte(state.pb & 0xff);
+				state.pc = state.pc + sexByte(state.pb);
+				break;
+				
+			case 0x21:		// brn
+				// effectively a nop
+				break;
+				
+			case 0x22:		// bhi
+				branchIfInst(state.pb, (state.cc & (CpuState.CC_C | CpuState.CC_Z)) == 0, true);
+				break;
+				
+			case 0x23:		// bls
+				branchIfInst(state.pb, (state.cc & (CpuState.CC_C | CpuState.CC_Z)) != 0, true);
+				break;
+				
+			case 0x24:		// bcc
+				branchIfInst(state.pb, (state.cc & CpuState.CC_C) == 0, true);
+				break;
+				
+			case 0x25:		// bcs
+				branchIfInst(state.pb, (state.cc & CpuState.CC_C) != 0, true);
 				break;
 				
 			case 0x26:		// bne
-				bneInst(state.pc + sexByte(state.pb & 0xff));
+				branchIfInst(state.pb, (state.cc & CpuState.CC_Z) == 0, true);
 				break;
 				
 			case 0x27:		// beq
-				beqInst(state.pc + sexByte(state.pb & 0xff));
+				branchIfInst(state.pb, (state.cc & CpuState.CC_Z) == 0, true);
+				break;
+				
+			case 0x28:		// bvc
+				branchIfInst(state.pb, (state.cc & CpuState.CC_V) == 0, true);
+				break;
+				
+			case 0x29:		// bvs
+				branchIfInst(state.pb, (state.cc & CpuState.CC_V) != 0, true);
+				break;
+				
+			case 0x2a:		// bpl
+				branchIfInst(state.pb, (state.cc & CpuState.CC_N) == 0, true);
+				break;
+				
+			case 0x2b:		// bmi
+				branchIfInst(state.pb, (state.cc & CpuState.CC_N) != 0, true);
 				break;
 				
 			case 0x30:		// leax
@@ -1356,16 +1435,36 @@ public class Cpu6x09 extends Cpu {
 				state.setZ(state.y == 0);
 				break;
 				
+			case 0x32:		// leas
+				state.s = calcEA();				
+				break;
+				
+			case 0x33:		// leau
+				state.u = calcEA();				
+				break;
+				
 			case 0x39:		// rts
 				rtsInst();
 				break;
 				
+			case 0x40:		// nega
+				state.a = negInst(state.a, true);
+				break;
+				
+			case 0x50:		// negb
+				state.b = negInst(state.b, true);
+				break;
+				
 			case 0x58:		// lslb
-				state.b = lsl8Inst(state.b);
+				state.b = lslInst(state.b, true);
 				break;
 				
 			case 0x86:		// lda #
-				state.a = ld8Inst(state.pb);
+				state.a = ldInst(state.pb, true);
+				break;
+				
+			case 0x8c:		// cmpx #
+				subInst(state.x, bus.getWord(state.pb), false);
 				break;
 				
 			case 0x8d:		// bsr
@@ -1373,43 +1472,43 @@ public class Cpu6x09 extends Cpu {
 				break;
 				
 			case 0x8e:		// ldx	#
-				ldxInst(state.pb);
+				state.x = ldInst(state.pb, false);
 				break;
 				
 			case 0xa8:		// eora indexed
-				state.a = eorInst(state.a, bus.getByte(calcEA()));
+				state.a = eorInst(state.a, bus.getByte(calcEA()), true);
 				break;
 				
 			case 0xb7:		// sta $xxxx
-				st8Inst(state.pb, state.a);
+				stInst(state.pb, state.a, true);
 				break;
 				
 			case 0xc6:		// ldb #
-				state.b = ld8Inst(state.pb);
+				state.b = ldInst(state.pb, true);
 				break;
 				
 			case 0xe7:		// stb indexed
-				st8Inst(calcEA(), state.b);
+				stInst(calcEA(), state.b, true);
 				break;
 				
 			case 0xf7:		// stb $xxxx
-				st8Inst(state.pb, state.b);
+				stInst(state.pb, state.b, true);
 				break;
 				
 			case 0x1026:	// lbne
-				bneInst(state.pc + sexWord(state.pb & 0xffff));
+				branchIfInst(state.pb, (state.cc & CpuState.CC_Z) == 0, true);
 				break;
 				
 			case 0x1027:	// lbeq
-				beqInst(state.pc + sexWord(state.pb & 0xffff));
+				branchIfInst(state.pb, (state.cc & CpuState.CC_Z) != 0, true);
 				break;
 				
 			case 0x108e:	// ldy	#
-				ldyInst(state.pb);
+				state.y = ldInst(state.pb, false);
 				break;
 				
 			case 0x10ce:	// lds #
-				state.s = ld8Inst(state.pb);
+				state.s = ldInst(state.pb, false);
 				break;
 				
 			default:
