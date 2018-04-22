@@ -23,6 +23,7 @@ public class Cpu6x09 extends Cpu {
     public static final int RESET_VEC = 0xfffe;
     public static final int SWI_VEC = 0xfffa;
     public static final int SWI2_VEC = 0xfff4;
+    public static final int SWI3_VEC = 0xfff2;
 
 	private CpuState state;
 	private StatusPanel statusPanel;
@@ -1773,6 +1774,26 @@ public class Cpu6x09 extends Cpu {
 				state.a = eorInst(state.a, bus.getByte(calcEA()), true);
 				break;
 				
+			case 0x96:		// lda <$xx
+				state.a = ldInst(bus.getByte((state.dp<<8) | state.pb), true);
+				break;
+				
+			case 0x97:		// sta <$xx
+				stInst((state.dp<<8) | state.pb, state.a, true);
+				break;
+				
+			case 0xa6:		// lda indexed
+				state.a = ldInst(bus.getByte(calcEA()), true);
+				break;
+				
+			case 0xa7:		// sta indexed
+				stInst(calcEA(), state.a, true);
+				break;
+				
+			case 0xb6:		// lda $xxxx
+				state.a = ldInst(bus.getByte(state.pb), true);
+				break;
+				
 			case 0xb7:		// sta $xxxx
 				stInst(state.pb, state.a, true);
 				break;
@@ -1781,28 +1802,232 @@ public class Cpu6x09 extends Cpu {
 				state.b = ldInst(state.pb, true);
 				break;
 				
+			case 0xcc:		// ldd  #
+				state.setD(state.pb);
+				break;
+				
+			case 0xce:		// ldu #
+				state.u = state.pb;
+				break;
+				
+			case 0xd6:		// ldb <$xx
+				state.b = ldInst(bus.getByte((state.dp<<8) | state.pb), true);
+				break;
+				
+			case 0xd7:		// stb <$xx
+				stInst((state.dp<<8) | state.pb, state.b, true);
+				break;
+				
+			case 0xdc:		// ldd <$xx
+				state.setD(ldInst(bus.getWord((state.dp<<8) | state.pb), false));
+				break;
+				
+			case 0xdd:		// std <$xx
+				stInst((state.dp<<8) | state.pb, state.getD(), false);
+				break;
+				
+			case 0xde:		// ldu <$xx
+				state.u = ldInst(bus.getWord((state.dp<<8) | state.pb), false);
+				break;
+				
+			case 0xdf:		// stu <$xx
+				stInst((state.dp<<8) | state.pb, state.u, false);
+				break;
+				
+			case 0xe6:		// ldb indexed
+				state.b = ldInst(bus.getByte(calcEA()), true);
+				break;
+				
 			case 0xe7:		// stb indexed
 				stInst(calcEA(), state.b, true);
 				break;
 				
-			case 0xf7:		// stb $xxxx
-				stInst(state.pb, state.b, true);
+			case 0xec:		// ldd indexed
+				state.setD(ldInst(bus.getWord(calcEA()), false));
+				break;
+				
+			case 0xed:		// std indexed
+				stInst(calcEA(), state.getD(), false);
+				break;
+				
+			case 0xee:		// ldu indexed
+				state.u = ldInst(bus.getWord(calcEA()), false);
+				break;
+				
+			case 0xef:		// stu indexed
+				stInst(calcEA(), state.u, false);
+				break;
+
+			case 0xfc:		// ldd $xxxx
+				state.setD(ldInst(bus.getWord(state.pb), false));
+				break;
+
+			case 0xfd:		// std $xxxx
+				stInst(state.pb, state.getD(), false);
+				break;
+				
+			case 0xfe:		// ldu $xxxx
+				state.u = ldInst(bus.getWord(state.pb), false);
+				break;
+
+			case 0xff:		// stu $xxxx
+				stInst(state.pb, state.u, true);
 				break;
 				
 			case 0x1026:	// lbne
 				branchIfInst(state.pb, (state.cc & CpuState.CC_Z) == 0, true);
 				break;
 				
+			case 0x103f:	// swi2
+				state.setE(1);
+				pushAll();
+				state.pc = bus.getWord(SWI2_VEC);
+				break;
+				
 			case 0x1027:	// lbeq
 				branchIfInst(state.pb, (state.cc & CpuState.CC_Z) != 0, true);
 				break;
 				
-			case 0x108e:	// ldy	#
+			case 0x1086:	// ldw #
+				state.setW(ldInst(state.pb, false));
+				break;
+				
+			case 0x108e:	// ldy #
 				state.y = ldInst(state.pb, false);
+				break;
+				
+			case 0x1096:	// ldw <$xx
+				state.setW(ldInst((state.dp<<8) | state.pb, false));
+				break;
+				
+			case 0x1097:	// stw <$xx
+				stInst((state.dp<<8) | state.pb, state.getW(), false);
+				break;
+				
+			case 0x109e:	// ldy $xxxx
+				state.y = ldInst((state.dp<<8) | state.pb, false);
+				break;
+				
+			case 0x109f:	// sty $xxxx
+				stInst((state.dp<<8) | state.pb, state.y, false);
+				break;
+				
+			case 0x10a6:	// ldw indexed
+				state.setW(ldInst(calcEA(), false));
+				break;
+				
+			case 0x10a7:	// stw indexed
+				stInst(calcEA(), state.getW(), false);
+				break;
+				
+			case 0x10b6:	// ldw $xxxx
+				state.setW(ldInst(state.pb, false));
+				break;
+				
+			case 0x10b7:	// stw $xxxx
+				stInst(state.pb, state.getW(), false);
+				break;
+				
+			case 0x10be:	// ldy $xxxx
+				state.y = ldInst(calcEA(), false);
+				break;
+				
+			case 0x10bf:	// sty $xxxx
+				stInst(calcEA(), state.y, false);
 				break;
 				
 			case 0x10ce:	// lds #
 				state.s = ldInst(state.pb, false);
+				break;
+				
+			case 0x10de:	// lds <$xx
+				state.s = ldInst(bus.getWord((state.dp<<8) | state.pb), false);
+				break;
+				
+			case 0x10df:	// sts <$xx
+				stInst((state.dp<<8) | state.pb, state.s, false);
+				break;
+				
+			case 0x10ee:	// lds indexed
+				state.s = ldInst(bus.getWord(calcEA()), false);
+				break;
+				
+			case 0x10ef:	// sts indexed
+				stInst(calcEA(), state.s, false);
+				break;
+				
+			case 0x10fe:	// lds $xxxx
+				state.s = ldInst(bus.getWord(state.pb), false);
+				break;
+				
+			case 0x10ff:	// sts $xxxx
+				stInst(state.pb, state.s, false);
+				break;
+				
+			case 0x113d:	// ldmd #
+				state.nativeMode = ((state.pb & 0x01) == 1);
+				break;
+
+			case 0x113f:	// swi3
+				state.setE(1);
+				pushAll();
+				state.pc = bus.getWord(SWI3_VEC);
+				break;
+				
+			case 0x1186:	// lde #
+				state.e = ldInst(state.pb, true);
+				break;
+				
+			case 0x1196:	// lde <$xx
+				state.e = ldInst(bus.getByte((state.dp<<8) | state.pb), true);
+				break;
+				
+			case 0x1197:	// ste <$xx
+				stInst((state.dp<<8) | state.pb, state.e, true);
+				break;
+				
+			case 0x11a6:	// lde indexed
+				state.e = ldInst(bus.getByte(calcEA()), true);
+				break;
+				
+			case 0x11a7:	// ste indexed
+				stInst(calcEA(), state.e, true);
+				break;
+				
+			case 0x11b6:	// lde $xxxx
+				state.e = ldInst(bus.getByte(state.pb), true);
+				break;
+				
+			case 0x11b7:	// ste $xxxx
+				stInst(state.pb, state.e, true);
+				break;
+				
+			case 0x11c6:	// ldf #
+				state.f = ldInst(state.pb, true);
+				break;
+				
+			case 0x11d6:	// ldf <$xx
+				state.f = ldInst(bus.getByte((state.dp<<8) | state.pb), true);
+				break;
+				
+			case 0x11d7:	// stf <$xx
+				stInst((state.dp<<8) | state.pb, state.f, true);
+				break;
+				
+			case 0x11e6:	// ldf indexed
+				state.f = ldInst(bus.getByte(calcEA()), true);
+				break;
+				
+			case 0x11e7:	// stf indexed
+				stInst(calcEA(), state.f, true);
+				break;
+				
+			case 0x11f6:	// ldf $xxxx
+				state.f = ldInst(bus.getByte(state.pb), true);
+				break;
+				
+			case 0x11f7:	// stf $xxxx
+				stInst(state.pb, state.f, true);
 				break;
 				
 			default:
