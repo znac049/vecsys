@@ -1247,15 +1247,13 @@ public class Cpu6x09 extends Cpu {
 		return val;
 	}
 	
-	private void comInst(int addr, boolean isByte) {
-		int val = isByte?bus.getByte(addr):bus.getWord(addr);
-		
+	private int comInst(int val, boolean isByte) {
 		val = ~val;
 		
 		state.setStdFlags(val, isByte);
 		state.cc &= ~CpuState.CC_V;
 		
-		bus.setByte(addr, val);
+		return val;
 	}
 	
 	private int subInst(int val, int subval, boolean isByte) {
@@ -1528,15 +1526,19 @@ public class Cpu6x09 extends Cpu {
 	private void executeInstruction() {
 		switch (state.ir) {
 			case 0x00:		// neg	<$xx
-			{
-				int addr = (state.dp<<8) | state.pb;
-				
-				bus.setByte(addr, negInst(bus.getByte(addr), true));
-			}
-			break;
+				{
+					int addr = (state.dp<<8) | state.pb;
+					
+					bus.setByte(addr, negInst(bus.getByte(addr), true));
+				}
+				break;
 				
 			case 0x03:		// com <$xx
-				comInst((state.dp<<8) | state.pb, true);
+				{
+					int addr = (state.dp<<8) | state.pb;
+				
+					bus.setByte(addr, comInst(bus.getByte(addr), true));
+				}
 				break;
 				
 			case 0x04:		// lsr <$xx
@@ -1718,8 +1720,16 @@ public class Cpu6x09 extends Cpu {
 				state.a = negInst(state.a, true);
 				break;
 				
+			case 0x43:		// coma
+				state.a = comInst(state.a, true);
+				break;
+				
 			case 0x50:		// negb
 				state.b = negInst(state.b, true);
+				break;
+				
+			case 0x53:		// comb
+				state.b = comInst(state.b, true);
 				break;
 				
 			case 0x58:		// lslb
@@ -1735,7 +1745,11 @@ public class Cpu6x09 extends Cpu {
 				break;
 				
 			case 0x63:		// com indexed
-				comInst(calcEA(), true);
+				{
+					int addr = calcEA();
+			
+					bus.setByte(addr, comInst(bus.getByte(addr), true));
+				}
 				break;
 				
 			case 0x64:		// lsr indexed
@@ -1754,6 +1768,22 @@ public class Cpu6x09 extends Cpu {
 				state.pc = calcEA();
 				break;
 				
+			case 0x70:		// neg $xxxx
+				{
+					int addr = state.pb;
+			
+					bus.setByte(addr, negInst(bus.getByte(addr), true));
+				}
+				break;
+			
+			case 0x73:		// com $xxxx
+				{
+					int addr = calcEA();
+		
+					bus.setByte(addr, comInst(bus.getByte(addr), true));
+				}
+				break;
+			
 			case 0x86:		// lda #
 				state.a = ldInst(state.pb, true);
 				break;
@@ -1782,6 +1812,14 @@ public class Cpu6x09 extends Cpu {
 				stInst((state.dp<<8) | state.pb, state.a, true);
 				break;
 				
+			case 0x9e:		// ldx <$xx
+				state.x = ldInst((state.dp<<8) | state.pb, false);
+				break;
+				
+			case 0x9f:		// stx <$xx
+				stInst((state.dp<<8) | state.pb, state.x, false);
+				break;
+				
 			case 0xa6:		// lda indexed
 				state.a = ldInst(bus.getByte(calcEA()), true);
 				break;
@@ -1790,12 +1828,28 @@ public class Cpu6x09 extends Cpu {
 				stInst(calcEA(), state.a, true);
 				break;
 				
+			case 0xae:		// ldx indexed
+				state.x = ldInst(state.pb, false);
+				break;
+				
+			case 0xaf:		// stx indexed
+				stInst(state.pb, state.x, false);
+				break;
+				
 			case 0xb6:		// lda $xxxx
 				state.a = ldInst(bus.getByte(state.pb), true);
 				break;
 				
 			case 0xb7:		// sta $xxxx
 				stInst(state.pb, state.a, true);
+				break;
+				
+			case 0xbe:		// ldx $xxxx
+				state.x = ldInst(state.pb, false);
+				break;
+				
+			case 0xbf:		// stx $xxxx
+				stInst(state.pb, state.y, false);
 				break;
 				
 			case 0xc6:		// ldb #
@@ -1858,6 +1912,14 @@ public class Cpu6x09 extends Cpu {
 				stInst(calcEA(), state.u, false);
 				break;
 
+			case 0xf6:		// ldb $xxxx
+				state.b = ldInst(bus.getByte(state.pb), true);
+				break;
+				
+			case 0xf7:		// stb $xxxx
+				stInst(state.pb, state.b, true);
+				break;
+				
 			case 0xfc:		// ldd $xxxx
 				state.setD(ldInst(bus.getWord(state.pb), false));
 				break;
@@ -1874,18 +1936,88 @@ public class Cpu6x09 extends Cpu {
 				stInst(state.pb, state.u, true);
 				break;
 				
+			case 0x1021:	// brn
+				// effectively a nop
+				break;
+				
+			case 0x1022:	// bhi
+				branchIfInst(state.pb, (state.cc & (CpuState.CC_C | CpuState.CC_Z)) == 0, false);
+				break;
+				
+			case 0x1023:	// bls
+				branchIfInst(state.pb, (state.cc & (CpuState.CC_C | CpuState.CC_Z)) != 0, false);
+				break;
+				
+			case 0x1024:	// bcc
+				branchIfInst(state.pb, (state.cc & CpuState.CC_C) == 0, false);
+				break;
+				
+			case 0x1025:	// bcs
+				branchIfInst(state.pb, (state.cc & CpuState.CC_C) != 0, false);
+				break;
+				
 			case 0x1026:	// lbne
-				branchIfInst(state.pb, (state.cc & CpuState.CC_Z) == 0, true);
+				branchIfInst(state.pb, (state.cc & CpuState.CC_Z) == 0, false);
+				break;
+				
+			case 0x1027:	// lbeq
+				branchIfInst(state.pb, (state.cc & CpuState.CC_Z) != 0, false);
+				break;
+				
+			case 0x1028:	// bvc
+				branchIfInst(state.pb, (state.cc & CpuState.CC_V) == 0, false);
+				break;
+				
+			case 0x1029:	// bvs
+				branchIfInst(state.pb, (state.cc & CpuState.CC_V) != 0, false);
+				break;
+				
+			case 0x102a:	// bpl
+				branchIfInst(state.pb, (state.cc & CpuState.CC_N) == 0, false);
+				break;
+				
+			case 0x102b:	// bmi
+				branchIfInst(state.pb, (state.cc & CpuState.CC_N) != 0, false);
+				break;
+				
+			case 0x102c:	// bge
+				branchIfInst(state.pb, (state.getN() == state.getV()), false);
+				break;
+				
+			case 0x102d:	// blt
+				branchIfInst(state.pb, (state.getN() != state.getV()), false);
+				break;
+				
+			case 0x102e:	// bgt
+				branchIfInst(state.pb, (state.getN() == state.getV()) && (state.getV() == 0), false);
+				break;
+				
+			case 0x102f:	// ble
+				branchIfInst(state.pb, (state.getN() != state.getV()) || (state.getZ() == 0), false);
+				break;
+				
+			case 0x1038:	// pshsw
+				state.s = pushWord(state.s, state.getW());
+				break;
+				
+			case 0x1039:	// pulsw
+				state.setW(bus.getWord(state.s));
+				state.s = (state.s + 2) & 0xffff;
+				break;
+				
+			case 0x103a:	// pshuw
+				state.u = pushWord(state.u, state.getW());
+				break;
+				
+			case 0x103b:	// puluw
+				state.setW(bus.getWord(state.u));
+				state.u = (state.u + 2) & 0xffff;
 				break;
 				
 			case 0x103f:	// swi2
 				state.setE(1);
 				pushAll();
 				state.pc = bus.getWord(SWI2_VEC);
-				break;
-				
-			case 0x1027:	// lbeq
-				branchIfInst(state.pb, (state.cc & CpuState.CC_Z) != 0, true);
 				break;
 				
 			case 0x1086:	// ldw #
@@ -1904,11 +2036,11 @@ public class Cpu6x09 extends Cpu {
 				stInst((state.dp<<8) | state.pb, state.getW(), false);
 				break;
 				
-			case 0x109e:	// ldy $xxxx
+			case 0x109e:	// ldy <$xx
 				state.y = ldInst((state.dp<<8) | state.pb, false);
 				break;
 				
-			case 0x109f:	// sty $xxxx
+			case 0x109f:	// sty <$xx
 				stInst((state.dp<<8) | state.pb, state.y, false);
 				break;
 				
@@ -1929,11 +2061,11 @@ public class Cpu6x09 extends Cpu {
 				break;
 				
 			case 0x10be:	// ldy $xxxx
-				state.y = ldInst(calcEA(), false);
+				state.y = ldInst(state.pb, false);
 				break;
 				
 			case 0x10bf:	// sty $xxxx
-				stInst(calcEA(), state.y, false);
+				stInst(state.pb, state.y, false);
 				break;
 				
 			case 0x10ce:	// lds #
