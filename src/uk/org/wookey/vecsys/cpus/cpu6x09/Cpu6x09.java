@@ -1248,10 +1248,13 @@ public class Cpu6x09 extends Cpu {
 	}
 	
 	private int comInst(int val, boolean isByte) {
-		val = ~val;
+		int mask = isByte?0xff:0xffff;
+
+		val = (~val) & mask;
 		
 		state.setStdFlags(val, isByte);
-		state.cc &= ~CpuState.CC_V;
+		state.setV(0);
+		state.setC(1);
 		
 		return val;
 	}
@@ -1269,19 +1272,17 @@ public class Cpu6x09 extends Cpu {
 		return tmp;
 	}
 	
-	private void lsrInst(int addr, boolean isByte) {
-		int val = bus.getByte(addr);
-		
+	private int lsrInst(int val, boolean isByte) {
 		state.setC(val & 0x01);
 		val = val >> 1;
 		state.setStdFlags(val, isByte);
 		state.setV(0);
 		
-		bus.setByte(addr, val);
+		return val;
 	}
 	
 	private int lslInst(int val, boolean isByte) {
-		int msbMask = isByte?0xff:0xffff;
+		int msbMask = isByte?0x80:0x8000;
 		int msb = val & msbMask;
 		
 		state.setC(msb);
@@ -1292,6 +1293,64 @@ public class Cpu6x09 extends Cpu {
 		// deal with the V flag (sign has changed)
 		state.setV(msb != (val & msbMask));
 		return val;
+	}
+	
+	private int rorInst(int val, boolean isByte) {
+		int carry = state.getC();
+		
+		state.setC(val & 0x01);
+		val = val >> 1;
+		state.setStdFlags(val, isByte);
+		
+		if (carry != 0) {
+			val = val | (isByte?0x80:0x8000);
+		}
+		
+		val = val & (isByte?0xff:0xffff);
+		
+		return val;
+	}
+	
+	private int rolInst(int val, boolean isByte) {
+		int msbMask = isByte?0x80:0x8000;
+		int msb = val & msbMask;
+		int carry = state.getC();
+		
+		state.setC(msb);
+		
+		val = val << 1;
+		state.setStdFlags(val, isByte);
+
+		if (carry != 0) {
+			val = val | 1;
+		}
+		
+		val = val & (isByte?0xff:0xffff);
+		
+		// deal with the V flag (sign has changed)
+		state.setV(msb != (val & msbMask));
+		return val;
+	}
+	
+	private int incInst(int val, boolean isByte) {
+		int mask = isByte?0xff:0xffff;
+		
+		val++;
+		state.setStdFlags(val, isByte);
+		state.setV((val & mask) != 0);
+		
+		return val & mask;
+	}
+	
+	private int decInst(int val, boolean isByte) {
+		int mask = isByte?0xff:0xffff;
+		int ov = isByte?0x80:0x8000;
+		
+		state.setV(val == ov);
+		val--;
+		state.setStdFlags(val, isByte);
+		
+		return val & mask;
 	}
 	
 	private int ldInst(int val, boolean isByte) {
@@ -1389,11 +1448,18 @@ public class Cpu6x09 extends Cpu {
 		state.pc = target;
 	}
 	
-	private void clrInst(int addr, boolean isByte) {
-		bus.setByte(addr, 0);
+	private int clrInst() {
 		state.setStdFlags(0, true);
 		state.setV(0);
-		state.setC(0);		
+		state.setC(0);
+		
+		return 0;
+	}
+	
+	private void tstInst(int val) {
+		state.setStdFlags(val, true);
+		state.setV(0);
+		state.setC(0);
 	}
 	
 	private void addInst(int addr, int amount, boolean isByte) {
@@ -1542,7 +1608,11 @@ public class Cpu6x09 extends Cpu {
 				break;
 				
 			case 0x04:		// lsr <$xx
-				lsrInst((state.dp<<8) | state.pb, true);
+				{
+					int addr = (state.dp<<8) | state.pb;
+					int val = lsrInst(bus.getByte(addr), true);
+					bus.setByte(addr, val);
+				}
 				break;
 				
 			case 0x0a:		// dec <$xx
@@ -1558,7 +1628,10 @@ public class Cpu6x09 extends Cpu {
 				break;
 				
 			case 0x0f:		// clr <$xx
-				clrInst((state.dp<<8) | state.pb, true);
+				{
+					int addr = (state.dp<<8) | state.pb;
+					bus.setByte(addr, clrInst());
+				}
 				break;
 				
 			case 0x12:		// nop
@@ -1724,6 +1797,30 @@ public class Cpu6x09 extends Cpu {
 				state.a = comInst(state.a, true);
 				break;
 				
+			case 0x46:		// rora
+				state.a = rorInst(state.a, true);
+				break;
+				
+			case 0x49:		// rola
+				state.a = rolInst(state.a, true);
+				break;
+				
+			case 0x4a:		// deca
+				state.a = decInst(state.a, true);
+				break;
+				
+			case 0x4c:		// inca
+				state.a = incInst(state.a, true);
+				break;
+				
+			case 0x4d:		// tsta
+				tstInst(state.a);
+				break;
+				
+			case 0x4f:		// clra
+				state.a = clrInst();
+				break;
+				
 			case 0x50:		// negb
 				state.b = negInst(state.b, true);
 				break;
@@ -1732,8 +1829,32 @@ public class Cpu6x09 extends Cpu {
 				state.b = comInst(state.b, true);
 				break;
 				
+			case 0x56:		// rorb
+				state.b = rorInst(state.b, true);
+				break;
+				
 			case 0x58:		// lslb
 				state.b = lslInst(state.b, true);
+				break;
+				
+			case 0x59:		// rolb
+				state.b = rolInst(state.b, true);
+				break;
+				
+			case 0x5a:		// decb
+				state.b = decInst(state.b, true);
+				break;
+				
+			case 0x5c:		// incb
+				state.b = incInst(state.b, true);
+				break;
+				
+			case 0x5d:		// tstb
+				tstInst(state.b);
+				break;
+				
+			case 0x5f:		// clrb
+				state.b = clrInst();
 				break;
 				
 			case 0x60:		// neg indexed
@@ -1753,7 +1874,11 @@ public class Cpu6x09 extends Cpu {
 				break;
 				
 			case 0x64:		// lsr indexed
-				lsrInst(calcEA(), true);
+				{
+					int addr = calcEA();
+					
+					bus.setByte(addr,  lsrInst(bus.getByte(addr), true));
+				}
 				break;
 				
 			case 0x6a:		// dec indexed
@@ -2104,6 +2229,46 @@ public class Cpu6x09 extends Cpu {
 				state.setE(1);
 				pushAll();
 				state.pc = bus.getWord(SWI3_VEC);
+				break;
+				
+			case 0x1143:	// come
+				state.e = comInst(state.e, true);
+				break;
+				
+			case 0x114a:	// dece
+				state.e = decInst(state.e, true);
+				break;
+				
+			case 0x114c:	// ince
+				state.e = incInst(state.e, true);
+				break;
+				
+			case 0x114d:	// tste
+				tstInst(state.e);
+				break;
+				
+			case 0x114f:	// clre
+				state.e = clrInst();
+				break;
+				
+			case 0x1153:	// comf
+				state.f = comInst(state.f, true);
+				break;
+				
+			case 0x115a:	// decf
+				state.f = decInst(state.f, true);
+				break;
+				
+			case 0x115c:	// incf
+				state.f = incInst(state.f, true);
+				break;
+				
+			case 0x115d:	// tstf
+				tstInst(state.f);
+				break;
+				
+			case 0x115f:	// clrf
+				state.f = clrInst();
 				break;
 				
 			case 0x1186:	// lde #

@@ -70,7 +70,7 @@ public class LEDButton extends JButton {
 	public void setLED(boolean on) {
 		ledActive = on;
 		
-		_log.logInfo("LED " + (on?"ON":"OFF"));
+		//_log.logInfo("LED " + (on?"ON":"OFF"));
 		
 		repaint();
 	}

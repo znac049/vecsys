@@ -8,6 +8,13 @@ public class DVGMemory extends Device {
 	private MemoryDevice vram;
 	private MemoryDevice vrom;
 	
+	private final static int VRAM_SIZE_BYTES = 2048;
+	private final static int VROM_SIZE_BYTES = 4096;
+	private final static int VMEM_SIZE_BYTES = VRAM_SIZE_BYTES+VROM_SIZE_BYTES;
+	private final static int VRAM_SIZE_WORDS = VRAM_SIZE_BYTES/2;
+	private final static int VROM_SIZE_WORDS = VROM_SIZE_BYTES/2;
+	private final static int VMEM_SIZE_WORDS = VMEM_SIZE_BYTES/2;
+	
 	public DVGMemory() throws IOException {
 		super("DVGMeory");
 		
@@ -37,5 +44,26 @@ public class DVGMemory extends Device {
 		else {		
 			vrom.setByte(addr-2048, val, id);
 		}
+	}
+	
+	public int get(int wideAddr) {
+		if ((wideAddr < 0) || (wideAddr >= VMEM_SIZE_WORDS)) {
+			return -1;
+		}
+
+		int byteAddr = wideAddr << 1;
+		
+		if (wideAddr < VRAM_SIZE_WORDS) {
+			return (vram.getByte(byteAddr, 0) | vram.getByte(byteAddr+1, 0)<<8);
+		}
+		else {
+			byteAddr = byteAddr - VRAM_SIZE_BYTES;
+			
+			return (vrom.getByte(byteAddr, 0) | vrom.getByte(byteAddr+1, 0)<<8);
+		}
+	}
+	
+	public int size() {
+		return VMEM_SIZE_WORDS;
 	}
 }
